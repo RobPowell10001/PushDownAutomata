@@ -1,4 +1,4 @@
-
+import json
 class Transition:
     def __init__(self, sourceState, destinationState, inputSymbol, topStack, push, pop):
         self.sourceState = sourceState
@@ -16,10 +16,21 @@ class State:
         self.transitions = transitions
 
 class PDA:
-    def __init__(self, states, currState):
-        self.states = states
+    def __init__(self, jsonString):
+        self.jsonObject = json.loads(jsonString) 
+        self.states = []
         self.stack = []
-        self.currState = currState
+        self.jsonDecoding()
+    def jsonDecoding(self):
+        for state in jsonObject["states"]:
+            tempTransitionList = [] 
+            for transition in state["transitions"]:
+                tempTransition = Transition(transition["destinationState"],transition["inputSymbol"],transition["topStack"],transition["push"],transition["pop"])
+                tempTransitionList.append(tempTransition)
+            tempState = State(state["name"],state["isInitial"],state["isFinal"],tempTransitionList)
+            if state["isInitial"]:
+                self.currState = tempState
+            self.states.append()
     def topStack(self):
         return self.stack[len(self.stack)-1]
     def findTransitions(self, inputSymbol):
