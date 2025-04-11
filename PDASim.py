@@ -27,3 +27,14 @@ class PDA:
         for transition in self.currState.transitions:
             if (transition.inputSymbol == inputSymbol) and (transition.topStack == self.topStack()):
                 acceptedTransitions.append(transition)
+        return acceptedTransitions
+    def doTransitions(self,transition):
+        if transition.pop:
+            self.stack.pop()
+        if transition.push:
+            self.stack.append(transition.push)
+        self.currState = transition.destinationState
+        if transition.inputSymbol:
+            return True
+        return False    
+
