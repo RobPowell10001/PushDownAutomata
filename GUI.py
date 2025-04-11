@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
+import PDASim
 
 def on_press(event):
     # Find the item under the cursor
@@ -15,7 +16,19 @@ def on_press(event):
 def on_drag(event, states, matrix):
     # Move the selected item with the mouse
     if selected_item:
-        canvas.coords(selected_item, event.x - 50, event.y - 50, event.x + 50, event.y + 50)
+        original_coords = canvas.coords(selected_item)
+        dx = event.x - (original_coords[0] + original_coords[2]) / 2
+        dy = event.y - (original_coords[1] + original_coords[3]) / 2
+        tags = canvas.gettags(selected_item)
+        state_tag = None
+        for tag in tags:
+            if tag.startswith("state_"):
+                state_tag = tag
+            break
+        if state_tag is not None:
+            items_to_move = canvas.find_withtag(state_tag)
+            for item in items_to_move:
+                canvas.move(item, dx, dy)
         update_arrows(states, matrix, selected_item)
 
 #draws an arrow from state 1 to state 2
@@ -91,6 +104,54 @@ def update_arrow(arrow, states, id1, id2):
     # Update the arrow to connect the edges of the circles
     canvas.coords(arrow, state1_edge[0], state1_edge[1], state2_edge[0], state2_edge[1])
 
+def create_nested_circle(x1, y1, x2, y2, stateID):
+    # Outer circle
+    outer_circle = canvas.create_oval(x1, y1, x2, y2, fill="white", tags=(f"state_{stateID}", "draggable"))
+    
+    # Calculate coordinates for the inner circle
+    inner_margin = 10  # Margin between the outer and inner circles
+    inner_x1 = x1 + inner_margin
+    inner_y1 = y1 + inner_margin
+    inner_x2 = x2 - inner_margin
+    inner_y2 = y2 - inner_margin
+    
+    # Inner circle
+    inner_circle = canvas.create_oval(inner_x1, inner_y1, inner_x2, inner_y2, fill="white", tags=(f"state_{stateID}"))
+    
+    return outer_circle, inner_circle
+
+
+def constructPDAStates(pda):
+
+    # Draw n draggable circles
+    circle_radius = 50
+    circle_spacing = 20
+    displayedStates = []
+
+    stateID = 0
+    for state in pda.states:
+        x1 = (circle_radius * 2 + circle_spacing) * stateID + circle_spacing
+        y1 = circle_spacing
+        x2 = x1 + circle_radius * 2
+        y2 = y1 + circle_radius * 2
+        if state.isFinal == True:
+            currState = (create_nested_circle(x1, y1, x2, y2, stateID))[0]
+        elif state.isInitial:
+            # add the initial arrow
+            currState = canvas.create_oval(x1, y1, x2, y2, fill="white", tags=(f"state_{stateID}", "draggable"))
+        else:
+            currState = canvas.create_oval(x1, y1, x2, y2, fill="white", tags=(f"state_{stateID}", "draggable"))
+        displayedStates.append(currState)
+        stateID += 1
+
+    return displayedStates
+
+def constructPDAArrows(pda, displayedStates):
+    matrix = [[0 for _ in range(len(stateList))] for _ in range(len(stateList))]
+    
+    for stateID in len(pda.states):
+        print(None)
+
 
 # Create the main application window
 root = tk.Tk()
@@ -100,31 +161,22 @@ root.title("Canvas")
 canvas = tk.Canvas(root, width=800, height=600, bg="white")
 canvas.pack()
 
-# Draw n draggable circles
-n = 3  # Number of circles
-circle_radius = 50
-circle_spacing = 20
-states = []
+# Retrieve PDA Info, Construct PDA
+pda = PDASim.PDA([PDASim.State("init", False, False, []), PDASim.State("2nd", False, True, [])], 0)
 
-for i in range(n):
-    x1 = (circle_radius * 2 + circle_spacing) * i + circle_spacing
-    y1 = circle_spacing
-    x2 = x1 + circle_radius * 2
-    y2 = y1 + circle_radius * 2
-    circle = canvas.create_oval(x1, y1, x2, y2, fill="blue", tags=["draggable", f"state_{i}", "final"])
-    states.append(circle)
+# Construct State circles
+stateList = constructPDAStates(pda)
 
-# Initialized to 0 -- if there is no arrow, will be 0. If there is an arrow, it is an arrow object
-adjacency_matrix = [[0 for _ in range(n)] for _ in range(n)]
+# Draw Arrows for Transitions
+# Initialized to 0 -- if there is no arrow, will be 0. If there is an arrow, it is a list of arrow objects
+adjacency_matrix = constructPDAArrows(pda)
 
-draw_arrow(adjacency_matrix, states, 0, 1)
-draw_arrow(adjacency_matrix, states, 1, 2)
-draw_arrow(adjacency_matrix, states, 2, 0)
+# draw_arrow(adjacency_matrix, stateList, 0, 1)
 
 # Bind mouse events 
 selected_item = None
 canvas.bind("<ButtonPress-1>", on_press)
-canvas.bind("<B1-Motion>", lambda event: on_drag(event, states, adjacency_matrix))
+canvas.bind("<B1-Motion>", lambda event: on_drag(event, stateList, adjacency_matrix))
 
 # Create a label
 label = tk.Label(root, text="Formal Defn of PDA:")
