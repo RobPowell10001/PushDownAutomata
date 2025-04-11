@@ -16,6 +16,10 @@ class State:
         self.transitions = transitions
 
 class PDA:
+    def __init__(self, states, currState):
+        self.states = states
+        self.stack = []
+        self.currState = currState
     def __init__(self, jsonString):
         self.jsonObject = json.loads(jsonString) 
         self.states = []
