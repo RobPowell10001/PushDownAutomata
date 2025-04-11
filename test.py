@@ -3,6 +3,7 @@
 import tkinter as tk
 import PDASim
 
+#pass the wherever the form should be displayed under to as root
 class AddTransitionForm:
     def __init__(self, root, pda):
         self.root = root
@@ -110,7 +111,7 @@ class AddTransitionForm:
         
              
         
-        
+#pass the wherever the form should be displayed under to as root
 class AddStateForm:
     def __init__(self, root, pda):
         self.root = root
