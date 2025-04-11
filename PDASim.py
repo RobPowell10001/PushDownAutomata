@@ -1,12 +1,15 @@
 import json
 class Transition:
-    def __init__(self, sourceState, destinationState, inputSymbol, topStack, push, pop):
-        self.sourceState = sourceState
+    def __init__(self, destinationState, inputSymbol, topStack, push, pop):
         self.destinationState = destinationState
         self.inputSymbol = inputSymbol
         self.topStack = topStack
         self.push = push
         self.pop = pop
+    
+    def toString(self):
+        
+        return f"{self.inputSymbol}, {self.topStack} {" (pop)" if self.pop else ""}" + " \N{RIGHTWARDS ARROW} " + f"{self.push}"
 
 class State:
     def __init__(self, name, isInitial, isFinal, transitions):
@@ -20,12 +23,11 @@ class PDA:
         self.states = states
         self.stack = []
         self.currState = currState
-    def __init__(self, jsonString):
-        self.jsonObject = json.loads(jsonString) 
+
+    def jsonDecoding(self, jsonString):
+        jsonObject = json.loads(jsonString) 
         self.states = []
         self.stack = []
-        self.jsonDecoding()
-    def jsonDecoding(self):
         for state in jsonObject["states"]:
             tempTransitionList = [] 
             for transition in state["transitions"]:

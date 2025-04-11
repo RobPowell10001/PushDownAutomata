@@ -32,7 +32,7 @@ def on_drag(event, states, matrix):
         update_arrows(states, matrix, selected_item)
 
 #draws an arrow from state 1 to state 2
-def draw_arrow(matrix, states, index1, index2):
+def draw_arrow(matrix, states, index1, index2, transition):
     state1 = states[index1]
     state2 = states[index2]
     # Get coordinates of each circle
@@ -49,15 +49,27 @@ def draw_arrow(matrix, states, index1, index2):
     distance = (dx**2 + dy**2)**0.5
 
     # Calculate the points on the edge of each circle
-    state1_edge = (state1_center[0] + dx / distance * circle_radius, state1_center[1] + dy / distance * circle_radius)
-    state2_edge = (state2_center[0] - dx / distance * circle_radius, state2_center[1] - dy / distance * circle_radius)
+    state1_edge = (state1_center[0] + dx / distance * 50, state1_center[1] + dy / distance * 50)
+    state2_edge = (state2_center[0] - dx / distance * 50, state2_center[1] - dy / distance * 50)
 
     # Draw the arrow
     newArrow = canvas.create_line(state1_edge[0], state1_edge[1], state2_edge[0], state2_edge[1], arrow=tk.LAST)
+
+    # Calculate the midpoint of the arrow
+    midpoint_x = (state1_edge[0] + state2_edge[0]) / 2
+    midpoint_y = (state1_edge[1] + state2_edge[1]) / 2
+
+    # Create the text at the midpoint
+    text_id = canvas.create_text(midpoint_x, midpoint_y - 10, text=f"{transition.toString()}", fill="black")
+
+    # Associate the text ID with the arrow
+    canvas.itemconfig(newArrow, tags=(f"arrow_{index1}_{index2}", f"text_{text_id}"))
+
+    # Store the arrow in the matrix
     if matrix[index1][index2] != 0:
-        matrix[index1][index2].append(newArrow)
+        matrix[index1][index2].append((newArrow, text_id))
     else:
-        matrix[index1][index2] = [newArrow]
+        matrix[index1][index2] = [(newArrow, text_id)]
 
 #update all arrows associated with the selected state
 def update_arrows(states, matrix, selectedState):
@@ -70,7 +82,7 @@ def update_arrows(states, matrix, selectedState):
     destinationID = 0
     for arrowsToDestination in matrix[sourceID]:
         if arrowsToDestination != 0:
-            for arrow in arrowsToDestination:
+            for arrow, text_id in arrowsToDestination:
                 update_arrow(arrow, states, sourceID, destinationID)
         destinationID += 1
     # now update inward arrows
@@ -78,7 +90,7 @@ def update_arrows(states, matrix, selectedState):
     sourceID = 0
     for arrowListsFromSource in matrix:
         if arrowListsFromSource[destinationID] != 0:
-            for arrow in arrowListsFromSource[destinationID]:
+            for arrow, text_id in arrowListsFromSource[destinationID]:
                 update_arrow(arrow, states, sourceID, destinationID)
         sourceID += 1
     
@@ -98,11 +110,20 @@ def update_arrow(arrow, states, id1, id2):
     distance = (dx**2 + dy**2)**0.5
 
     # Calculate the points on the edge of each circle
-    state1_edge = (state1_center[0] + dx / distance * circle_radius, state1_center[1] + dy / distance * circle_radius)
-    state2_edge = (state2_center[0] - dx / distance * circle_radius, state2_center[1] - dy / distance * circle_radius)
+    state1_edge = (state1_center[0] + dx / distance * 50, state1_center[1] + dy / distance * 50)
+    state2_edge = (state2_center[0] - dx / distance * 50, state2_center[1] - dy / distance * 50)
 
     # Update the arrow to connect the edges of the circles
     canvas.coords(arrow, state1_edge[0], state1_edge[1], state2_edge[0], state2_edge[1])
+
+    # Update the position of the associated text
+    tags = canvas.gettags(arrow)
+    for tag in tags:
+        if tag.startswith("text_"):
+            text_id = int(tag.split("_")[1])
+            midpoint_x = (state1_edge[0] + state2_edge[0]) / 2
+            midpoint_y = (state1_edge[1] + state2_edge[1]) / 2
+            canvas.coords(text_id, midpoint_x, midpoint_y - 10)
 
 def create_nested_circle(x1, y1, x2, y2, stateID):
     # Outer circle
@@ -137,20 +158,47 @@ def constructPDAStates(pda):
         if state.isFinal == True:
             currState = (create_nested_circle(x1, y1, x2, y2, stateID))[0]
         elif state.isInitial:
-            # add the initial arrow
+            # Add the initial arrow
             currState = canvas.create_oval(x1, y1, x2, y2, fill="white", tags=(f"state_{stateID}", "draggable"))
+            arrow_x1 = x1 - 30
+            arrow_y1 = (y1 + y2) / 2
+            arrow_x2 = x1
+            arrow_y2 = (y1 + y2) / 2
+            canvas.create_line(arrow_x1, arrow_y1, arrow_x2, arrow_y2, arrow=tk.LAST, tags=(f"state_{stateID}"))
         else:
             currState = canvas.create_oval(x1, y1, x2, y2, fill="white", tags=(f"state_{stateID}", "draggable"))
+        
+        # Display state name above the circle
+        text_x = (x1 + x2) / 2
+        text_y = y1 - 10  # Position slightly above the circle
+        canvas.create_text(text_x, text_y, text=state.name, tags=(f"state_{stateID}"))
         displayedStates.append(currState)
         stateID += 1
 
     return displayedStates
 
-def constructPDAArrows(pda, displayedStates):
+def constructPDAArrows(pda, stateList):
     matrix = [[0 for _ in range(len(stateList))] for _ in range(len(stateList))]
     
-    for stateID in len(pda.states):
-        print(None)
+    for stateID in range(len(pda.states)):
+        for transition in pda.states[stateID].transitions:
+            draw_arrow(matrix, stateList, stateID, transition.destinationState, transition)
+            
+            # # Get the coordinates of the arrow
+            # state1_coords = canvas.coords(stateList[stateID])
+            # state2_coords = canvas.coords(stateList[transition.destinationState])
+            # state1_center = ((state1_coords[0] + state1_coords[2]) / 2, (state1_coords[1] + state1_coords[3]) / 2)
+            # state2_center = ((state2_coords[0] + state2_coords[2]) / 2, (state2_coords[1] + state2_coords[3]) / 2)
+            
+            # # Calculate the midpoint of the arrow
+            # midpoint_x = (state1_center[0] + state2_center[0]) / 2
+            # midpoint_y = (state1_center[1] + state2_center[1]) / 2
+            
+            # Display the transition.toString() above the arrow
+            #canvas.create_text(midpoint_x, midpoint_y - 10, text=transition.toString(), fill="black")
+    
+    return matrix
+
 
 
 # Create the main application window
@@ -162,14 +210,14 @@ canvas = tk.Canvas(root, width=800, height=600, bg="white")
 canvas.pack()
 
 # Retrieve PDA Info, Construct PDA
-pda = PDASim.PDA([PDASim.State("init", False, False, []), PDASim.State("2nd", False, True, [])], 0)
+pda = PDASim.PDA([PDASim.State("init", True, False, [PDASim.Transition(1,"a","b","c",True)]), PDASim.State("2nd", False, True, [])], 0)
 
 # Construct State circles
 stateList = constructPDAStates(pda)
 
 # Draw Arrows for Transitions
 # Initialized to 0 -- if there is no arrow, will be 0. If there is an arrow, it is a list of arrow objects
-adjacency_matrix = constructPDAArrows(pda)
+adjacency_matrix = constructPDAArrows(pda, stateList)
 
 # draw_arrow(adjacency_matrix, stateList, 0, 1)
 
