@@ -25,7 +25,7 @@ class PDA:
     def findTransitions(self, inputSymbol):
         acceptedTransitions = []
         for transition in self.currState.transitions:
-            if (transition.inputSymbol == inputSymbol) and (transition.topStack == self.topStack()):
+            if ((transition.inputSymbol == inputSymbol) or transition.inputSymbol == None) and (transition.topStack == self.topStack() or transition.topStack == None):
                 acceptedTransitions.append(transition)
         return acceptedTransitions
     def doTransitions(self,transition):
