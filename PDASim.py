@@ -34,14 +34,14 @@ class PDA:
                 tempTransition = Transition(transition["destinationState"],transition["inputSymbol"],transition["topStack"],transition["push"],transition["pop"])
                 tempTransitionList.append(tempTransition)
             tempState = State(state["name"],state["isInitial"],state["isFinal"],tempTransitionList)
+            self.states.append(tempState)
             if state["isInitial"]:
-                self.currState = tempState
-            self.states.append()
+                self.currState = len(self.states) - 1
     def topStack(self):
         return self.stack[len(self.stack)-1]
     def findTransitions(self, inputSymbol):
         acceptedTransitions = []
-        for transition in self.currState.transitions:
+        for transition in self.states[self.currState].transitions:
             if ((transition.inputSymbol == inputSymbol) or transition.inputSymbol == None) and (transition.topStack == self.topStack() or transition.topStack == None):
                 acceptedTransitions.append(transition)
         return acceptedTransitions

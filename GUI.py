@@ -135,7 +135,6 @@ def update_arrows(states, matrix, selectedState):
                 for arrow, text_id in arrowListsFromSource[destinationID]:
                     update_arrow(arrow, states, sourceID, destinationID)
             sourceID += 1
-    
 
 def update_arrow(arrow, states, id1, id2):
     if id1 == id2:  # Handle circular arrows (self-loops)
@@ -186,6 +185,24 @@ def create_nested_circle(x1, y1, x2, y2, stateID):
     
     return outer_circle, inner_circle
 
+def update_state_color(stateID, isCurrent):
+    # Target the correct stateTag
+    stateTag = f"state_{stateID}"
+
+    # Determine the color based on whether the state is current
+    color = "red" if isCurrent else "black"
+
+    # Get all items with the specified stateTag
+    items = canvas.find_withtag(stateTag)
+
+    for item in items:
+        # Check the type of item and update its color accordingly
+        if canvas.type(item) == "oval":  # For circles, change the outline color
+            canvas.itemconfig(item, outline=color)
+        elif canvas.type(item) == "text":  # For text, change the text color
+            canvas.itemconfig(item, fill=color)
+        elif canvas.type(item) == "line":  # For arrows, change the line color
+            canvas.itemconfig(item, fill=color)
 
 def constructPDAStates(pda):
 
@@ -210,6 +227,8 @@ def constructPDAStates(pda):
             arrow_x2 = x1
             arrow_y2 = (y1 + y2) / 2
             canvas.create_line(arrow_x1, arrow_y1, arrow_x2, arrow_y2, arrow=tk.LAST, tags=(f"state_{stateID}"))
+            # Set Color to Red
+            update_state_color(stateID, True)
         else:
             currState = canvas.create_oval(x1, y1, x2, y2, fill="white", tags=(f"state_{stateID}", "draggable"))
         
@@ -231,7 +250,63 @@ def constructPDAArrows(pda, stateList, matrix):
             else:
                 draw_arrow(matrix, stateList, stateID, transition.destinationState, transition)
             
+def restart_canvas():
+    global restart
+    restart = True
 
+    # Clear the canvas instead of destroying the root window
+    canvas.delete("all")
+
+    # Destroy the state form window
+    stateForm.root.destroy()
+
+    # Destroy all widgets in the root window except the canvas
+    for widget in root.winfo_children():
+        if widget != canvas:
+            widget.destroy()
+
+    # Reset display flags
+    global restart_button_displayed, label_displayed, input_box_displayed, submit_input_button_displayed
+    restart_button_displayed = False
+    label_displayed = False
+    input_box_displayed = False
+    submit_input_button_displayed = False
+    root.quit()
+
+def make_step(pda, input, currIndex):
+    if currIndex == -1:
+        return #FIXME: handle finishing execution
+    if currIndex < len(input):
+        currSymbol = input[currIndex]
+    else: 
+        return #FIXME: handle finishing execution
+    validTransitions = pda.findTransitions(currSymbol)
+    if len(validTransitions) > 0:
+        currStateIndex = pda.currState
+        transitionToTake = validTransitions[0]
+        resultStateIndex = transitionToTake.destinationState
+        update_state_color(currStateIndex, False)
+        update_state_color(resultStateIndex, True)
+        pda.doTransitions(transitionToTake)
+        currIndex+= 1
+        
+    else: 
+        return #FIXME: handle finishing execution
+    # take the first one
+
+
+def submit_input_string(pda):
+    user_input = input_box.get()
+    #Create a step forward button
+    global inputIndex
+    inputIndex = 0
+    step_button = tk.Button(root, text="Step", command=lambda: make_step(pda, user_input, inputIndex))
+    step_button.pack(pady=10)
+    submit_input_button.pack_forget()  # Hide the button that called this
+    submit_input_button_displayed = False
+    input_box.pack_forget() # Hide the box used for input
+    input_box_displayed = False
+    
 
 
 # Create the main application window
@@ -243,31 +318,12 @@ canvas = tk.Canvas(root, width=800, height=600, bg="white")
 canvas.pack()
 
 restart = False
-first = True
 
-def restart_canvas():
-    global restart
-    restart = True
-    root.quit()
-    stateForm.root.destroy()
 
-def make_step(pda, input, currIndex):
-    if currIndex < len(input):
-        currSymbol = input[currIndex]
-    else: 
-        return
-    validTransitions = pda.findTransitions(currSymbol)
-
-def submit_input_string(sourceButton, pda):
-    user_input = input_box.get()
-    #Create a step forward button
-    global inputIndex
-    inputIndex = 0
-    step_button = tk.Button(root, text="Step", command=make_step(pda, user_input, inputIndex))
-    step_button.pack(pady=10)
-    sourceButton.withdraw() #hide the button that called this
-    
-    
+restart_button_displayed = False
+label_displayed = False
+input_box_displayed = False
+submit_input_button_displayed = False
 
 while True:
     restart = False
@@ -275,6 +331,7 @@ while True:
     canvas.delete("all")
 
     pda = PDASim.PDA([], 0)
+    pda.stack.append("a")
 
     stateList = []
     adjacency_matrix = []
@@ -290,29 +347,33 @@ while True:
     canvas.bind("<ButtonPress-1>", on_press)
     canvas.bind("<B1-Motion>", lambda event: on_drag(event, stateList, stateForm.transitionForm.adjacencyMatrix))
 
-    if first:
-        # Create a submit button
+
+    # Create a submit button
+    if not restart_button_displayed:
         restart_button = tk.Button(root, text="Restart", command=restart_canvas)
         restart_button.pack(pady=10)
-
-        # Create a label
-        label = tk.Label(root, text="Project Number to fix:")
+        resart_button_displayed = True
+    
+    # Create a label
+    if not label_displayed:
+        label = tk.Label(root, text="Input to Machine:")
         label.pack(pady=5)
+        label_displayed = True
 
-        # Create a text box
+    # Create a text box
+    if not input_box_displayed:
         input_box = tk.Entry(root, width=40)
         input_box.pack(pady=5)
+        input_box_displayed = True
 
-        #Create a step forward button
-        submit_input_button = tk.Button(root, text="Step", command=submit_input_string(submit_input_button, pda))
+    #Create a step forward button
+    if not submit_input_button_displayed:
+        submit_input_button = tk.Button(root, text="Submit Input", command=lambda: submit_input_string(pda))
         submit_input_button.pack(pady=10)
-
-        
-    
+        submit_input_button_displayed = True
 
     # Run the application
     root.mainloop()
     if not root.winfo_exists():
         break
-    first = False
     
