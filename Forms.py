@@ -39,6 +39,12 @@ class AddTransitionForm:
 
         self.result_label = tk.Label(root, text="")
         self.result_label.pack()
+        
+    def getValue(self, entry):
+        if isinstance(entry, tk.BooleanVar):
+            return entry.get()
+        value = entry.get().strip()
+        return value if value else None
 
     def add_transition_section(self):
         """Add a new transition entry section (name, email, phone)."""
@@ -84,12 +90,12 @@ class AddTransitionForm:
         """Collect and display data from all transition sections."""
         all_people = []
         for idx, transition in enumerate(self.transition_sections):
-            sourceState = transition['sourceState'].get()
-            destinationState = transition['destinationState'].get()
-            inputSymbol = transition['inputSymbol'].get()
-            stackSymbol = transition['stackSymbol'].get()
-            pop = transition['pop'].get()
-            push = transition['push'].get()
+            sourceState = self.getValue(transition['sourceState'])
+            destinationState = self.getValue(transition['destinationState'])
+            inputSymbol = self.getValue(transition['inputSymbol'])
+            stackSymbol = self.getValue(transition['stackSymbol'])
+            pop = transition['pop'].get() #can get actual value because it is a boolean and cannot be None
+            push = self.getValue(transition['push'])
             all_people.append({'sourceState': sourceState, 'destinationState': destinationState, 'inputSymbol': inputSymbol, 'stackSymbol': stackSymbol, 'pop': pop, 'push': push})
 
         #print("Submitted Transitions:")
@@ -156,6 +162,12 @@ class AddStateForm:
         self.result_label = tk.Label(root, text="")
         self.result_label.pack()
 
+    def getValue(self, entry):
+        if isinstance(entry, tk.BooleanVar):
+            return entry.get()
+        value = entry.get().strip()
+        return value if value else None
+
     def add_transition_section(self):
         """Add a new state entry section (name, email, phone)."""
         frame = tk.Frame(self.form_frame, borderwidth=1, relief="groove", padx=10, pady=10)
@@ -184,7 +196,7 @@ class AddStateForm:
         """Save data from all state sections to a PDA."""
         all_states = []
         for idx, state in enumerate(self.state_sections):
-            name = state['name'].get()
+            name = self.getValue(state['name'])
             initial = state['initial'].get()
             final = state['final'].get()
             all_states.append({'name': name, 'initial': initial, 'final': final})
