@@ -245,10 +245,29 @@ canvas.pack()
 restart = False
 first = True
 
-def on_submit():
+def restart_canvas():
     global restart
     restart = True
     root.quit()
+    stateForm.root.destroy()
+
+def make_step(pda, input, currIndex):
+    if currIndex < len(input):
+        currSymbol = input[currIndex]
+    else: 
+        return
+    validTransitions = pda.findTransitions(currSymbol)
+
+def submit_input_string(sourceButton, pda):
+    user_input = input_box.get()
+    #Create a step forward button
+    global inputIndex
+    inputIndex = 0
+    step_button = tk.Button(root, text="Step", command=make_step(pda, user_input, inputIndex))
+    step_button.pack(pady=10)
+    sourceButton.withdraw() #hide the button that called this
+    
+    
 
 while True:
     restart = False
@@ -266,15 +285,30 @@ while True:
     # Initialized to 0 -- if there is no arrow, will be 0. If there is an arrow, it is a list of arrow objects
     # transitionForm = 
 
-    # Bind mouse events 
+    # Bind mouse events
     selected_item = None
     canvas.bind("<ButtonPress-1>", on_press)
     canvas.bind("<B1-Motion>", lambda event: on_drag(event, stateList, stateForm.transitionForm.adjacencyMatrix))
 
     if first:
         # Create a submit button
-        submit_button = tk.Button(root, text="Restart", command=on_submit)
-        submit_button.pack(pady=10)
+        restart_button = tk.Button(root, text="Restart", command=restart_canvas)
+        restart_button.pack(pady=10)
+
+        # Create a label
+        label = tk.Label(root, text="Project Number to fix:")
+        label.pack(pady=5)
+
+        # Create a text box
+        input_box = tk.Entry(root, width=40)
+        input_box.pack(pady=5)
+
+        #Create a step forward button
+        submit_input_button = tk.Button(root, text="Step", command=submit_input_string(submit_input_button, pda))
+        submit_input_button.pack(pady=10)
+
+        
+    
 
     # Run the application
     root.mainloop()
