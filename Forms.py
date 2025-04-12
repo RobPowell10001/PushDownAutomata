@@ -5,9 +5,12 @@ import PDASim
 
 #pass the wherever the form should be displayed under to as root
 class AddTransitionForm:
-    def __init__(self, root, pda):
+    def __init__(self, root, pda, constructFunction, stateList):
         self.root = root
         self.root.title("Transition Entry Form")
+        self.constructFunction = constructFunction #function that creates arrows between states
+        self.stateList = stateList #list of 'state' circle objects, created by the state form
+        self.adjacencyMatrix = [[0 for _ in range(len(stateList))] for _ in range(len(stateList))] #matrix to store arrows
         
         self.pda = pda
 
@@ -90,7 +93,7 @@ class AddTransitionForm:
             all_people.append({'sourceState': sourceState, 'destinationState': destinationState, 'inputSymbol': inputSymbol, 'stackSymbol': stackSymbol, 'pop': pop, 'push': push})
 
         #print("Submitted Transitions:")
-        stateMap = {item.name: index for index, item in enumerate(pda.states)}
+        stateMap = {item.name: index for index, item in enumerate(self.pda.states)}
         for i, transition in enumerate(all_people):
             #print(f"Transition {i + 1}: src={transition['sourceState']}, destinationState={transition['destinationState']}")
             src = stateMap.get(transition['sourceState'], -1)
@@ -98,14 +101,18 @@ class AddTransitionForm:
             if src == -1 or dest == -1:
                 print(f"either the source state or the destination state does not exist! transition {i} skipped.")
             else:
-                toAdd = PDASim.Transition(src, dest, transition['inputSymbol'], transition['stackSymbol'], transition['push'], transition['pop'])
-                pda.states[src].transitions.append(toAdd)
+                toAdd = PDASim.Transition(dest, transition['inputSymbol'], transition['stackSymbol'], transition['push'], transition['pop'])
+                self.pda.states[src].transitions.append(toAdd)
             #for state in pda.states:
                 #print(stateMap)
                 #print(state.name)
 
-        self.result_label.config(text="Form submitted! Check console for data.")
-        
+        if self.constructFunction:
+            # print(self.stateList)
+            # print(self.pda.states)
+            # print(self.adjacencyMatrix)
+            self.constructFunction(self.pda, self.stateList, self.adjacencyMatrix)
+            self.root.destroy()
         
         
         
@@ -113,9 +120,13 @@ class AddTransitionForm:
         
 #pass the wherever the form should be displayed under to as root
 class AddStateForm:
-    def __init__(self, root, pda):
+    def __init__(self, root, pda, constructFunction, constructArrowsFunction, stateList):
         self.root = root
         self.root.title("State Entry Form")
+        self.constructFunction = constructFunction
+        self.constructArrowsFunction = constructArrowsFunction
+        self.stateList = stateList #list of circle objects
+        self.transitionForm = None
         
         self.pda = pda
 
@@ -181,15 +192,14 @@ class AddStateForm:
         #print("Submitted States:")
         for i, state in enumerate(all_states):
             #print(f"State {i + 1}: name={state['name']}, final={state['final']}")
-            pda.states.append(PDASim.State(state['name'], state['initial'], state['final'], []))
+            self.pda.states.append(PDASim.State(state['name'], state['initial'], state['final'], []))
             if state['initial']:
-                pda.currState = len(pda.states) - 1
+                self.pda.currState = len(self.pda.states) - 1
+        
+        if self.constructFunction:
+            new_states = self.constructFunction(self.pda)
+            self.stateList.clear()  # Clear the existing list
+            self.stateList.extend(new_states)  # Add the new states to the same list
+            self.root.withdraw()  # Hide the current tkinter window
+            self.transitionForm = AddTransitionForm(tk.Toplevel(self.root), self.pda, self.constructArrowsFunction, self.stateList)
 
-        #self.result_label.config(text="Form submitted! Check console for data.")
-
-# Run the app
-root = tk.Tk()
-pda = PDASim.PDA([], 0)
-app = AddStateForm(tk.Toplevel(root), pda) #CHANGE tk.Toplevel(root) TO WHEREVER THE FORM SHOULD BE DISPLAYED UNDER
-app2 = AddTransitionForm(tk.Toplevel(root), pda)
-root.mainloop()

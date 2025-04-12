@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 import PDASim
+import Forms
 
 def on_press(event):
     # Find the item under the cursor
@@ -120,19 +121,20 @@ def update_arrows(states, matrix, selectedState):
             break
     # update outward arrows
     destinationID = 0
-    for arrowsToDestination in matrix[sourceID]:
-        if arrowsToDestination != 0:
-            for arrow, text_id in arrowsToDestination:
-                update_arrow(arrow, states, sourceID, destinationID)
-        destinationID += 1
-    # now update inward arrows
-    destinationID = sourceID
-    sourceID = 0
-    for arrowListsFromSource in matrix:
-        if arrowListsFromSource[destinationID] != 0:
-            for arrow, text_id in arrowListsFromSource[destinationID]:
-                update_arrow(arrow, states, sourceID, destinationID)
-        sourceID += 1
+    if matrix:
+        for arrowsToDestination in matrix[sourceID]:
+            if arrowsToDestination != 0:
+                for arrow, text_id in arrowsToDestination:
+                    update_arrow(arrow, states, sourceID, destinationID)
+            destinationID += 1
+        # now update inward arrows
+        destinationID = sourceID
+        sourceID = 0
+        for arrowListsFromSource in matrix:
+            if arrowListsFromSource[destinationID] != 0:
+                for arrow, text_id in arrowListsFromSource[destinationID]:
+                    update_arrow(arrow, states, sourceID, destinationID)
+            sourceID += 1
     
 
 def update_arrow(arrow, states, id1, id2):
@@ -220,8 +222,7 @@ def constructPDAStates(pda):
 
     return displayedStates
 
-def constructPDAArrows(pda, stateList):
-    matrix = [[0 for _ in range(len(stateList))] for _ in range(len(stateList))]
+def constructPDAArrows(pda, stateList, matrix):
     
     for stateID in range(len(pda.states)):
         for transition in pda.states[stateID].transitions:
@@ -230,8 +231,6 @@ def constructPDAArrows(pda, stateList):
             else:
                 draw_arrow(matrix, stateList, stateID, transition.destinationState, transition)
             
-    
-    return matrix
 
 
 
@@ -243,52 +242,43 @@ root.title("Canvas")
 canvas = tk.Canvas(root, width=800, height=600, bg="white")
 canvas.pack()
 
-# Retrieve PDA Info, Construct PDA
-pda = PDASim.PDA([
-    PDASim.State("q0", True, False, [
-        PDASim.Transition(1, "a", None, "A", False),  # Push 'A' on stack for input 'a'
-        PDASim.Transition(0, "b", None, None, False)  # Stay in q0 for input 'b'
-    ]),
-    PDASim.State("q1", False, False, [
-        PDASim.Transition(2, "b", "A", None, True),  # Pop 'A' from stack for input 'b'
-        PDASim.Transition(1, "a", None, "A", False)  # Push 'A' on stack for input 'a'
-    ]),
-    PDASim.State("q2", False, True, [
-        PDASim.Transition(2, None, None, None, False)  # Stay in q2 for empty input
-    ])
-], 0)
+restart = False
+first = True
 
-# Construct State circles
-stateList = constructPDAStates(pda)
-
-# Draw Arrows for Transitions
-# Initialized to 0 -- if there is no arrow, will be 0. If there is an arrow, it is a list of arrow objects
-adjacency_matrix = constructPDAArrows(pda, stateList)
-
-
-# Bind mouse events 
-selected_item = None
-canvas.bind("<ButtonPress-1>", on_press)
-canvas.bind("<B1-Motion>", lambda event: on_drag(event, stateList, adjacency_matrix))
-
-# Create a label
-label = tk.Label(root, text="Formal Defn of PDA:")
-label.pack(pady=5)
-
-# Create a text box
-input_box = tk.Entry(root, width=40)
-input_box.pack(pady=5)
 def on_submit():
-    user_input = input_box.get()
-    if user_input:
-        print(user_input)
-        #do sm with it
-    else:
-        messagebox.showwarning("Warning", "Input cannot be empty!")
+    global restart
+    restart = True
+    root.quit()
 
-# Create a submit button
-submit_button = tk.Button(root, text="Submit", command=on_submit)
-submit_button.pack(pady=10)
+while True:
+    restart = False
+    #clear canvas
+    canvas.delete("all")
 
-# Run the application
-root.mainloop()
+    pda = PDASim.PDA([], 0)
+
+    stateList = []
+    adjacency_matrix = []
+    # Construct State circles via form
+    stateForm = Forms.AddStateForm(tk.Toplevel(root), pda, constructPDAStates, constructPDAArrows, stateList) #CHANGE tk.Toplevel(root) TO WHEREVER THE FORM SHOULD BE DISPLAYED UNDER
+
+    # Draw Arrows for Transitions
+    # Initialized to 0 -- if there is no arrow, will be 0. If there is an arrow, it is a list of arrow objects
+    # transitionForm = 
+
+    # Bind mouse events 
+    selected_item = None
+    canvas.bind("<ButtonPress-1>", on_press)
+    canvas.bind("<B1-Motion>", lambda event: on_drag(event, stateList, stateForm.transitionForm.adjacencyMatrix))
+
+    if first:
+        # Create a submit button
+        submit_button = tk.Button(root, text="Restart", command=on_submit)
+        submit_button.pack(pady=10)
+
+    # Run the application
+    root.mainloop()
+    if not root.winfo_exists():
+        break
+    first = False
+    
