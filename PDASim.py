@@ -19,10 +19,11 @@ class State:
         self.transitions = transitions
 
 class PDA:
-    def __init__(self, states, currState):
+    def __init__(self, states, currState, initialState):
         self.states = states
         self.stack = []
         self.currState = currState
+        self.initialState = initialState
 
     def jsonDecoding(self, jsonString):
         jsonObject = json.loads(jsonString) 
@@ -37,14 +38,18 @@ class PDA:
             self.states.append(tempState)
             if state["isInitial"]:
                 self.currState = len(self.states) - 1
+                self.initialState = len(self.states) - 1
+
     def topStack(self):
         return self.stack[len(self.stack)-1]
+    
     def findTransitions(self, inputSymbol):
         acceptedTransitions = []
         for transition in self.states[self.currState].transitions:
             if ((transition.inputSymbol == inputSymbol) or transition.inputSymbol == None) and (transition.topStack == self.topStack() or transition.topStack == None):
                 acceptedTransitions.append(transition)
         return acceptedTransitions
+    
     def doTransitions(self,transition):
         if transition.pop:
             self.stack.pop()

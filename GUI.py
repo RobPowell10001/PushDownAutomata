@@ -271,21 +271,50 @@ def restart_canvas():
             widget.destroy()
 
     # Reset display flags
-    global restart_button_displayed, label_displayed, input_box_displayed, submit_input_button_displayed
     restart_button_displayed = False
     label_displayed = False
     input_box_displayed = False
     submit_input_button_displayed = False
     root.quit()
 
+def restart_pda(pda):
+    # reset displayed and stored pda to original configuration
+    update_state_color(pda.currState, False)
+    pda.currState = pda.initialState
+    update_state_color(pda.currState, True)
+    if step_button:
+        step_button.destroy()
+    if label:
+        label.destroy()
+    if input_box:
+        input_box.destroy()
+    if submit_input_button:
+        submit_input_button.destroy()
+    
+    # Create a label
+    label = tk.Label(root, text="Input to Machine:")
+    label.pack(pady=5)
+    label_displayed = True
+
+    # Create a text box
+    input_box = tk.Entry(root, width=40)
+    input_box.pack(pady=5)
+    input_box_displayed = True
+
+    #Create a submit button, which creates a step forward button
+    submit_input_button = tk.Button(root, text="Submit Input", command=lambda: submit_input_string(pda))
+    submit_input_button.pack(pady=10)
+    submit_input_button_displayed = True
+
 def make_step(pda, input, currIndex, sourceButton):
     print(currIndex)
-    if currIndex == -1:
-        return #FIXME: handle finishing execution
     if currIndex < len(input):
         currSymbol = input[currIndex]
-    else: 
-        return #FIXME: handle finishing execution
+    elif pda.states[pda.currState].isFinal:
+        messagebox.showinfo("Accepted", "This input was accepted!")
+    else:
+        messagebox.showerror("Did Not Accept", "Failed, finished input on non-accpeting state")
+        
     validTransitions = pda.findTransitions(currSymbol)
     if len(validTransitions) > 0:
         currStateIndex = pda.currState
@@ -294,18 +323,23 @@ def make_step(pda, input, currIndex, sourceButton):
         update_state_color(currStateIndex, False)
         update_state_color(resultStateIndex, True)
         pda.doTransitions(transitionToTake)
+        if pda.states[pda.currState].isFinal and currIndex == len(input) - 1:
+            messagebox.showinfo("Accepted", "This input was accepted!")
+        
+
         sourceButton.config(command = lambda: make_step(pda, input, currIndex + 1, sourceButton))
         
     else: 
-        return #FIXME: handle finishing execution
+        messagebox.showerror("Did Not Accept", "Failed, no valid transitions")
     # take the first one
 
 def submit_input_string(pda):
     user_input = input_box.get()
     #Create a step forward button
-    global inputIndex
     step_button = tk.Button(root, text="Step", command=lambda: make_step(pda, user_input, 0, step_button))
     step_button.pack(pady=10)
+    restart_pda_button = tk.Button(root, text="Restart PDA", command=lambda: restart_pda(pda))
+    restart_pda_button.pack(pady=10)
     submit_input_button.pack_forget()  # Hide the button that called this
     submit_input_button_displayed = False
     input_box.pack_forget() # Hide the box used for input
@@ -323,18 +357,30 @@ canvas.pack()
 
 restart = False
 
-
+global restart_pda_button
+global restart_button
+global label
+global input_box
+global submit_input_button
+global step_button
+global restart_button_displayed
 restart_button_displayed = False
+global restart_pda_button_displayed
+restart_button_displayed = False
+global label_displayed
 label_displayed = False
+global input_box_displayed
 input_box_displayed = False
+global submit_input_button_displayed
 submit_input_button_displayed = False
+
 
 while True:
     restart = False
     #clear canvas
     canvas.delete("all")
 
-    pda = PDASim.PDA([], 0)
+    pda = PDASim.PDA([], 0, -1)
     pda.stack.append("a")
 
     stateList = []
@@ -352,7 +398,7 @@ while True:
     canvas.bind("<B1-Motion>", lambda event: on_drag(event, stateList, stateForm.transitionForm.adjacencyMatrix))
 
 
-    # Create a submit button
+    # Create a restart button
     if not restart_button_displayed:
         restart_button = tk.Button(root, text="Restart", command=restart_canvas)
         restart_button.pack(pady=10)
@@ -370,11 +416,14 @@ while True:
         input_box.pack(pady=5)
         input_box_displayed = True
 
-    #Create a step forward button
+    #Create a 
     if not submit_input_button_displayed:
         submit_input_button = tk.Button(root, text="Submit Input", command=lambda: submit_input_string(pda))
         submit_input_button.pack(pady=10)
         submit_input_button_displayed = True
+    
+
+    
 
     # Run the application
     root.mainloop()

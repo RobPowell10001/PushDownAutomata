@@ -195,6 +195,7 @@ class AddStateForm:
             self.pda.states.append(PDASim.State(state['name'], state['initial'], state['final'], []))
             if state['initial']:
                 self.pda.currState = len(self.pda.states) - 1
+                self.pda.initialState = len(self.pda.states) - 1
         
         if self.constructFunction:
             new_states = self.constructFunction(self.pda)
