@@ -15,21 +15,24 @@ def on_press(event):
         selected_item = None
 
 def on_drag(event, states, matrix):
+    print("in on drag")
     # Move the selected item with the mouse
     if selected_item:
         original_coords = canvas.coords(selected_item)
         dx = event.x - (original_coords[0] + original_coords[2]) / 2
         dy = event.y - (original_coords[1] + original_coords[3]) / 2
         tags = canvas.gettags(selected_item)
-        state_tag = None
+        movement_tag = None
         for tag in tags:
-            if tag.startswith("state_"):
-                state_tag = tag
-            break
-        if state_tag is not None:
-            items_to_move = canvas.find_withtag(state_tag)
+            if tag.startswith("mvmt_group_"):
+                movement_tag = tag
+                print(f"found movement tag {tag}")
+                break
+        if movement_tag is not None:
+            items_to_move = canvas.find_withtag(movement_tag)
             for item in items_to_move:
                 canvas.move(item, dx, dy)
+        
         update_arrows(states, matrix, selected_item)
 
 #draws an arrow from state 1 to state 2
@@ -90,7 +93,7 @@ def draw_circular_arrow(matrix, stateList, stateID, transition):
     y2 = start_y + loop_offset
 
     # Draw the circular arrow
-    circular_arrow = canvas.create_arc(x1, y1, x2, y2, start=0, extent=300, style=tk.ARC, tags=(f"state_{stateID}"))
+    circular_arrow = canvas.create_arc(x1, y1, x2, y2, start=0, extent=300, style=tk.ARC, tags=(f"mvmt_group_{stateID}"))
 
     # Add an arrowhead pointing straight down
     arrow_offset_x = 19
@@ -99,12 +102,12 @@ def draw_circular_arrow(matrix, stateList, stateID, transition):
     arrow_y1 = start_y + loop_offset * 0.7 + arrow_offset_y
     arrow_x2 = start_x + arrow_offset_x
     arrow_y2 = start_y + loop_offset * 0.9 + arrow_offset_y
-    canvas.create_line(arrow_x1, arrow_y1, arrow_x2, arrow_y2, arrow=tk.LAST, tags=(f"state_{stateID}"))
+    canvas.create_line(arrow_x1, arrow_y1, arrow_x2, arrow_y2, arrow=tk.LAST, tags=(f"mvmt_group_{stateID}"))
 
     # Add the transition text near the circular arrow
     text_x = start_x - loop_offset * 1.5
     text_y = start_y - loop_offset * 1.5
-    text_id = canvas.create_text(text_x, text_y, text=f"{transition.toString()}", fill="black", tags=(f"state_{stateID}"))
+    text_id = canvas.create_text(text_x, text_y, text=f"{transition.toString()}", fill="black", tags=(f"mvmt_group_{stateID}"))
 
     # Store the circular arrow and text in the matrix
     if matrix[stateID][stateID] != 0:
@@ -171,7 +174,7 @@ def update_arrow(arrow, states, id1, id2):
 
 def create_nested_circle(x1, y1, x2, y2, stateID):
     # Outer circle
-    outer_circle = canvas.create_oval(x1, y1, x2, y2, fill="white", tags=(f"state_{stateID}", "draggable"))
+    outer_circle = canvas.create_oval(x1, y1, x2, y2, fill="white", tags=(f"state_{stateID}", f"mvmt_group_{stateID}", "draggable"))
     
     # Calculate coordinates for the inner circle
     inner_margin = 10  # Margin between the outer and inner circles
@@ -181,7 +184,7 @@ def create_nested_circle(x1, y1, x2, y2, stateID):
     inner_y2 = y2 - inner_margin
     
     # Inner circle
-    inner_circle = canvas.create_oval(inner_x1, inner_y1, inner_x2, inner_y2, fill="white", tags=(f"state_{stateID}"))
+    inner_circle = canvas.create_oval(inner_x1, inner_y1, inner_x2, inner_y2, fill="white", tags=(f"state_{stateID}", f"mvmt_group_{stateID}"))
     
     return outer_circle, inner_circle
 
@@ -201,8 +204,6 @@ def update_state_color(stateID, isCurrent):
             canvas.itemconfig(item, outline=color)
         elif canvas.type(item) == "text":  # For text, change the text color
             canvas.itemconfig(item, fill=color)
-        elif canvas.type(item) == "line":  # For arrows, change the line color
-            canvas.itemconfig(item, fill=color)
 
 def constructPDAStates(pda):
 
@@ -217,25 +218,29 @@ def constructPDAStates(pda):
         y1 = circle_spacing
         x2 = x1 + circle_radius * 2
         y2 = y1 + circle_radius * 2
+
+        # Display state name above the circle
+        text_x = (x1 + x2) / 2
+        text_y = y1 - 10  # Position slightly above the circle
+        canvas.create_text(text_x, text_y, text=state.name, tags=(f"state_{stateID}", f"mvmt_group_{stateID}"))
+
+        # Display circle
         if state.isFinal == True:
             currState = (create_nested_circle(x1, y1, x2, y2, stateID))[0]
         elif state.isInitial:
             # Add the initial arrow
-            currState = canvas.create_oval(x1, y1, x2, y2, fill="white", tags=(f"state_{stateID}", "draggable"))
+            currState = canvas.create_oval(x1, y1, x2, y2, fill="white", tags=(f"state_{stateID}", f"mvmt_group_{stateID}", "draggable"))
             arrow_x1 = x1 - 30
             arrow_y1 = (y1 + y2) / 2
             arrow_x2 = x1
             arrow_y2 = (y1 + y2) / 2
-            canvas.create_line(arrow_x1, arrow_y1, arrow_x2, arrow_y2, arrow=tk.LAST, tags=(f"state_{stateID}"))
+            canvas.create_line(arrow_x1, arrow_y1, arrow_x2, arrow_y2, arrow=tk.LAST, tags=(f"state_{stateID}", f"mvmt_group_{stateID}"))
             # Set Color to Red
             update_state_color(stateID, True)
         else:
-            currState = canvas.create_oval(x1, y1, x2, y2, fill="white", tags=(f"state_{stateID}", "draggable"))
+            currState = canvas.create_oval(x1, y1, x2, y2, fill="white", tags=(f"state_{stateID}", f"mvmt_group_{stateID}", "draggable"))
         
-        # Display state name above the circle
-        text_x = (x1 + x2) / 2
-        text_y = y1 - 10  # Position slightly above the circle
-        canvas.create_text(text_x, text_y, text=state.name, tags=(f"state_{stateID}"))
+        
         displayedStates.append(currState)
         stateID += 1
 
@@ -273,7 +278,8 @@ def restart_canvas():
     submit_input_button_displayed = False
     root.quit()
 
-def make_step(pda, input, currIndex):
+def make_step(pda, input, currIndex, sourceButton):
+    print(currIndex)
     if currIndex == -1:
         return #FIXME: handle finishing execution
     if currIndex < len(input):
@@ -288,19 +294,17 @@ def make_step(pda, input, currIndex):
         update_state_color(currStateIndex, False)
         update_state_color(resultStateIndex, True)
         pda.doTransitions(transitionToTake)
-        currIndex+= 1
+        sourceButton.config(command = lambda: make_step(pda, input, currIndex + 1, sourceButton))
         
     else: 
         return #FIXME: handle finishing execution
     # take the first one
 
-
 def submit_input_string(pda):
     user_input = input_box.get()
     #Create a step forward button
     global inputIndex
-    inputIndex = 0
-    step_button = tk.Button(root, text="Step", command=lambda: make_step(pda, user_input, inputIndex))
+    step_button = tk.Button(root, text="Step", command=lambda: make_step(pda, user_input, 0, step_button))
     step_button.pack(pady=10)
     submit_input_button.pack_forget()  # Hide the button that called this
     submit_input_button_displayed = False
