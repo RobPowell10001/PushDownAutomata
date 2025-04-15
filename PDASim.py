@@ -23,7 +23,7 @@ class PDA:
         self.stack = []
         self.currState = currState
         self.initialState = -1
-    def jsonEncoding(self):
+    def jsonEncoding(self, fileName = "data"):
         jsonData = {}
         jsonData["states"] = []
         for state in self.states:
@@ -46,7 +46,7 @@ class PDA:
             jsonData["states"].append(tempStateData)
         jsonData["stack"] = []
         jsonData["currState"] = self.initialState
-        with open("data.json", "w") as file:
+        with open(f"{fileName}.json", "w") as file:
             json.dump(jsonData, file, indent=4)
     def jsonDecoding(self, jsonString):
         jsonObject = json.loads(jsonString) 

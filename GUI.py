@@ -3,6 +3,7 @@ from tkinter import messagebox
 import PDASim
 import Forms
 import json
+import os
 
 def on_press(event):
     # Find the item under the cursor
@@ -277,13 +278,6 @@ def restart_canvas(fromJson):
     for widget in root.winfo_children():
         if widget != canvas:
             widget.destroy()
-
-    # Reset display flags
-    global restart_button_displayed, label_displayed, input_box_displayed, submit_input_button_displayed
-    restart_button_displayed = False
-    label_displayed = False
-    input_box_displayed = False
-    submit_input_button_displayed = False
     root.quit()
 
 def make_step(pda, input, currIndex, sourceButton):
@@ -304,7 +298,6 @@ def make_step(pda, input, currIndex, sourceButton):
         update_state_color(resultStateIndex, True)
         pda.doTransitions(transitionToTake)
         display_stack(pda)
-        pda.jsonEncoding()
         if pda.states[pda.currState].isFinal and currIndex == len(input) - 1:
             messagebox.showinfo("Accepted", "This input was accepted!")
         if (transitionToTake.inputSymbol == None):
@@ -322,13 +315,14 @@ def submit_input_string(pda):
     user_input = input_box.get()
     #Create a step forward button
     display_input(user_input, 0)
-    global inputIndex
     step_button = tk.Button(root, text="Step", command=lambda: make_step(pda, user_input, 0, step_button))
+    reset_button = tk.Button(root, text="Reset with new Input", command=lambda: restart_PDA(pda))
+    reset_button.pack(pady=10)
     step_button.pack(pady=10)
     submit_input_button.pack_forget()  # Hide the button that called this
-    submit_input_button_displayed = False
     input_box.pack_forget() # Hide the box used for input
-    input_box_displayed = False
+    label.pack_forget() #Hide the label for input
+        # Create a button to reset to take new input
 
 # Function to display the stack on the canvas
 def display_stack(pda):
@@ -355,6 +349,16 @@ def display_input(input, currIndex):
 
     # Display the input string at the bottom of the canvas
     canvas.create_text(400, 580, text=f"Input: {formatted_input}", fill="black", font=("Arial", 14), tags="input_display")
+
+def restart_PDA(pda):
+    #save PDA to temp file
+    pda.jsonEncoding("cache")
+    #set flag to use cached PDA
+    global fromCache
+    fromCache = True
+    #restart entire program
+    restart_canvas(True)
+    pass
 
 # Create a simple tkinter form to prompt the user
 def prompt_import_method():
@@ -388,23 +392,19 @@ def prompt_import_method():
 root = tk.Tk()
 root.title("Canvas")
 
-# Call the prompt function to set fromJson
-fromJson = False  # Default value
-prompt_import_method()
-
 # Create a canvas widget
 canvas = tk.Canvas(root, width=800, height=600, bg="white")
 canvas.pack()
 
 restart = False
-
-restart_button_displayed = False
-label_displayed = False
-input_box_displayed = False
-submit_input_button_displayed = False
-
+fromCache = False
 
 while True:
+    # Call the prompt function to set fromJson
+    fromJson = False  # Default value
+    if not fromCache:
+        prompt_import_method()
+
     restart = False
     #clear canvas
     canvas.delete("all")
@@ -414,9 +414,9 @@ while True:
     
     # If user tries to input from JSON
     # Read the JSON file as a string
-    if fromJson:
+    if fromJson or fromCache:
         json_string = ""
-        with open('data.json', 'r') as file:
+        with open(f'{"data" if fromJson else "cache"}.json', 'r') as file:
             json_string = file.read()
         pda.jsonDecoding(json_string)
         stateList = constructPDAStates(pda)
@@ -432,34 +432,35 @@ while True:
     # Bind mouse events, allowing draff
     selected_item = None
     canvas.bind("<ButtonPress-1>", on_press)
-    if fromJson:
+    if fromJson or fromCache:
         canvas.bind("<B1-Motion>", lambda event: on_drag(event, stateList, adjacency_matrix))
     else:
         canvas.bind("<B1-Motion>", lambda event: on_drag(event, stateList, stateForm.transitionForm.adjacencyMatrix))
 
-    # Create a submit button
-    if not restart_button_displayed:
-        restart_button = tk.Button(root, text="Restart", command=lambda: restart_canvas(fromJson))
-        restart_button.pack(pady=10)
-        resart_button_displayed = True
+    # Create a restart button
+    restart_button = tk.Button(root, text="New PDA", command=lambda: restart_canvas(fromJson))
+    restart_button.pack(pady=10)
     
     # Create a label
-    if not label_displayed:
-        label = tk.Label(root, text="Input to Machine:")
-        label.pack(pady=5)
-        label_displayed = True
+    label = tk.Label(root, text="Input to Machine:")
+    label.pack(pady=5)
 
     # Create a text box
-    if not input_box_displayed:
-        input_box = tk.Entry(root, width=40)
-        input_box.pack(pady=5)
-        input_box_displayed = True
+    input_box = tk.Entry(root, width=40)
+    input_box.pack(pady=5)
 
     #Create a submit input button, which itself creates a step forward button
-    if not submit_input_button_displayed:
-        submit_input_button = tk.Button(root, text="Submit Input", command=lambda: submit_input_string(pda))
-        submit_input_button.pack(pady=10)
-        submit_input_button_displayed = True
+    submit_input_button = tk.Button(root, text="Submit Input", command=lambda: submit_input_string(pda))
+    submit_input_button.pack(pady=10)
+
+    #Create a submit input button, which itself creates a step forward button
+    save_as_json_button = tk.Button(root, text="Save PDA to data.json", command=lambda: pda.jsonEncoding())
+    save_as_json_button.pack(pady=10)
+
+    if fromCache:
+        # Delete cache.json file
+        if os.path.exists("cache.json"):
+            os.remove("cache.json")
 
     # Run the application
     root.mainloop()
