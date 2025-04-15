@@ -280,13 +280,12 @@ def restart_canvas():
 
 def make_step(pda, input, currIndex, sourceButton):
     print(currIndex)
-    if currIndex == -1:
-        return #FIXME: handle finishing execution
     if currIndex < len(input):
         currSymbol = input[currIndex]
-        print(f"current input symbol is {currSymbol}")
-    else: 
-        return #FIXME: handle finishing execution
+    elif pda.states[pda.currState].isFinal:
+        messagebox.showinfo("Accepted", "This input was accepted!")
+    else:
+        messagebox.showerror("Did Not Accept", "Failed, finished input on non-accpeting state")
     validTransitions = pda.findTransitions(currSymbol)
     print (f"list of valid transitions: {validTransitions}")
     if len(validTransitions) > 0:
