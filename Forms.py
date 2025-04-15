@@ -20,9 +20,33 @@ class AddTransitionForm:
         title = tk.Label(root, text="Add Transitions", font=("Arial", 14))
         title.pack(pady=10)
 
-        # Container for dynamic form sections
-        self.form_frame = tk.Frame(root)
-        self.form_frame.pack()
+                # Scrollable Canvas Setup
+        canvas_frame = tk.Frame(root)
+        canvas_frame.pack(fill="both", expand=True)
+
+        self.canvas = tk.Canvas(canvas_frame, borderwidth=0)
+        self.canvas.config(width=650)
+        scrollbar = tk.Scrollbar(canvas_frame, orient="vertical", command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=scrollbar.set)
+
+        scrollbar.pack(side="right", fill="y")
+        self.canvas.pack(side="left", fill="both", expand=True)
+
+        # Frame inside the canvas
+        self.form_frame = tk.Frame(self.canvas)
+        self.canvas.create_window((0, 0), window=self.form_frame, anchor="nw")
+
+        # Configure scrolling behavior
+        def on_frame_configure(event):
+            self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+        self.form_frame.bind("<Configure>", on_frame_configure)
+
+        # Allow mousewheel scrolling on Windows/macOS
+        def _on_mousewheel(event):
+            self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+        self.canvas.bind_all("<MouseWheel>", _on_mousewheel)
 
         # Add initial transition section
         self.add_transition_section()
@@ -142,9 +166,33 @@ class AddStateForm:
         title = tk.Label(root, text="Add States", font=("Arial", 14))
         title.pack(pady=10)
 
-        # Container for dynamic form sections
-        self.form_frame = tk.Frame(root)
-        self.form_frame.pack()
+        # Scrollable Canvas Setup
+        canvas_frame = tk.Frame(root)
+        canvas_frame.pack(fill="both", expand=True)
+
+        self.canvas = tk.Canvas(canvas_frame, borderwidth=0)
+        self.canvas.config(width=200)
+        scrollbar = tk.Scrollbar(canvas_frame, orient="vertical", command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=scrollbar.set)
+
+        scrollbar.pack(side="right", fill="y")
+        self.canvas.pack(side="left", fill="both", expand=True)
+
+        # Frame inside the canvas
+        self.form_frame = tk.Frame(self.canvas)
+        self.canvas.create_window((0, 0), window=self.form_frame, anchor="nw")
+
+        # Configure scrolling behavior
+        def on_frame_configure(event):
+            self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+        self.form_frame.bind("<Configure>", on_frame_configure)
+
+        # Allow mousewheel scrolling on Windows/macOS
+        def _on_mousewheel(event):
+            self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+        self.canvas.bind_all("<MouseWheel>", _on_mousewheel)
 
         # Add initial state section
         self.add_transition_section()
