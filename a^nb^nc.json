@@ -15,40 +15,54 @@
             ]
         },
         {
-            "name": "loop",
+            "name": "A",
             "isInitial": false,
             "isFinal": false,
             "transitions": [
                 {
                     "destinationState": 1,
-                    "inputSymbol": "(",
+                    "inputSymbol": "a",
                     "topStack": null,
-                    "push": "(",
+                    "push": "a",
                     "pop": false
                 },
                 {
-                    "destinationState": 1,
-                    "inputSymbol": ")",
-                    "topStack": "(",
-                    "push": null,
-                    "pop": true
-                },
-                {
                     "destinationState": 2,
-                    "inputSymbol": null,
-                    "topStack": "$",
+                    "inputSymbol": "b",
+                    "topStack": "a",
                     "push": null,
                     "pop": true
                 }
             ]
         },
         {
-            "name": "win",
+            "name": "B",
+            "isInitial": false,
+            "isFinal": false,
+            "transitions": [
+                {
+                    "destinationState": 2,
+                    "inputSymbol": "b",
+                    "topStack": "a",
+                    "push": null,
+                    "pop": true
+                },
+                {
+                    "destinationState": 3,
+                    "inputSymbol": "c",
+                    "topStack": "$",
+                    "push": "$",
+                    "pop": true
+                }
+            ]
+        },
+        {
+            "name": "C",
             "isInitial": false,
             "isFinal": true,
             "transitions": []
         }
     ],
     "stack": [],
-    "currState": 0
+    "currState": -1
 }

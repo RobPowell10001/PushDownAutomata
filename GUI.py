@@ -286,8 +286,9 @@ def make_step(pda, input, currIndex, sourceButton):
         currSymbol = input[currIndex]
     elif pda.states[pda.currState].isFinal:
         messagebox.showinfo("Accepted", "This input was accepted!")
+        return
     else:
-        messagebox.showerror("Did Not Accept", "Failed, finished input on non-accpeting state")
+        currSymbol = None
     validTransitions = pda.findTransitions(currSymbol)
     print (f"list of valid transitions: {validTransitions}")
     if len(validTransitions) > 0:
