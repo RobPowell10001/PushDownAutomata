@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 import PDASim
 import Forms
+import json
 
 def on_press(event):
     # Find the item under the cursor
@@ -15,7 +16,6 @@ def on_press(event):
         selected_item = None
 
 def on_drag(event, states, matrix):
-    print("in on drag")
     # Move the selected item with the mouse
     if selected_item:
         original_coords = canvas.coords(selected_item)
@@ -26,7 +26,6 @@ def on_drag(event, states, matrix):
         for tag in tags:
             if tag.startswith("mvmt_group_"):
                 movement_tag = tag
-                print(f"found movement tag {tag}")
                 break
         if movement_tag is not None:
             items_to_move = canvas.find_withtag(movement_tag)
@@ -37,6 +36,10 @@ def on_drag(event, states, matrix):
 
 #draws an arrow from state 1 to state 2
 def draw_arrow(matrix, states, index1, index2, transition):
+    numTransitions = 0
+    if matrix[index1][index2] != 0:
+        numTransitions = len(matrix[index1][index2])
+
     state1 = states[index1]
     state2 = states[index2]
     # Get coordinates of each circle
@@ -64,7 +67,7 @@ def draw_arrow(matrix, states, index1, index2, transition):
     midpoint_y = (state1_edge[1] + state2_edge[1]) / 2
 
     # Create the text at the midpoint
-    text_id = canvas.create_text(midpoint_x, midpoint_y - 10, text=f"{transition.toString()}", fill="black")
+    text_id = canvas.create_text(midpoint_x, midpoint_y - (10 * (1 + numTransitions)), text=f"{transition.toString()}", fill="black")
 
     # Associate the text ID with the arrow
     canvas.itemconfig(newArrow, tags=(f"arrow_{index1}_{index2}", f"text_{text_id}"))
@@ -76,6 +79,10 @@ def draw_arrow(matrix, states, index1, index2, transition):
         matrix[index1][index2] = [(newArrow, text_id)]
 
 def draw_circular_arrow(matrix, stateList, stateID, transition):
+    numTransitions = 0
+    if matrix[stateID][stateID] != 0:
+        numTransitions = len(matrix[stateID][stateID])
+    
     # Get the coordinates of the state
     state_coords = canvas.coords(stateList[stateID])
     state_center = ((state_coords[0] + state_coords[2]) / 2, (state_coords[1] + state_coords[3]) / 2)
@@ -105,8 +112,8 @@ def draw_circular_arrow(matrix, stateList, stateID, transition):
     canvas.create_line(arrow_x1, arrow_y1, arrow_x2, arrow_y2, arrow=tk.LAST, tags=(f"mvmt_group_{stateID}"))
 
     # Add the transition text near the circular arrow
-    text_x = start_x - loop_offset * 1.5
-    text_y = start_y - loop_offset * 1.5
+    text_x = start_x - loop_offset * 1.5 
+    text_y = start_y - loop_offset * 1.5 - (10 * numTransitions)
     text_id = canvas.create_text(text_x, text_y, text=f"{transition.toString()}", fill="black", tags=(f"mvmt_group_{stateID}"))
 
     # Store the circular arrow and text in the matrix
@@ -255,7 +262,7 @@ def constructPDAArrows(pda, stateList, matrix):
             else:
                 draw_arrow(matrix, stateList, stateID, transition.destinationState, transition)
             
-def restart_canvas():
+def restart_canvas(fromJson):
     global restart
     restart = True
 
@@ -263,7 +270,8 @@ def restart_canvas():
     canvas.delete("all")
 
     # Destroy the state form window
-    stateForm.root.destroy()
+    if not fromJson:
+        stateForm.root.destroy()
 
     # Destroy all widgets in the root window except the canvas
     for widget in root.winfo_children():
@@ -296,9 +304,15 @@ def make_step(pda, input, currIndex, sourceButton):
         update_state_color(resultStateIndex, True)
         pda.doTransitions(transitionToTake)
         display_stack(pda)
+        pda.jsonEncoding()
         if pda.states[pda.currState].isFinal and currIndex == len(input) - 1:
             messagebox.showinfo("Accepted", "This input was accepted!")
-        sourceButton.config(command = lambda: make_step(pda, input, currIndex + 1, sourceButton))
+        if (transitionToTake.inputSymbol == None):
+            sourceButton.config(command = lambda: make_step(pda, input, currIndex, sourceButton))
+            display_input(input, currIndex)
+        else:
+            sourceButton.config(command = lambda: make_step(pda, input, currIndex + 1, sourceButton))
+            display_input(input, currIndex + 1)
     else: 
         return #FIXME: handle finishing execution
     # take the first one
@@ -306,6 +320,7 @@ def make_step(pda, input, currIndex, sourceButton):
 def submit_input_string(pda):
     user_input = input_box.get()
     #Create a step forward button
+    display_input(user_input, 0)
     global inputIndex
     step_button = tk.Button(root, text="Step", command=lambda: make_step(pda, user_input, 0, step_button))
     step_button.pack(pady=10)
@@ -325,10 +340,56 @@ def display_stack(pda):
     # Display the stack in the top-left corner
     canvas.create_text(10, 10, anchor="nw", text=stack_text, fill="black", font=("Arial", 12), tags="stack_display")
 
+def display_input(input, currIndex):
+    # Clear any existing input display
+    canvas.delete("input_display")
+
+    # Format the input string with the current character highlighted
+    formatted_input = ""
+    for i, char in enumerate(input):
+        if i == currIndex:
+            formatted_input += f"[{char}]"  # Highlight the current character
+        else:
+            formatted_input += char
+
+    # Display the input string at the bottom of the canvas
+    canvas.create_text(400, 580, text=f"Input: {formatted_input}", fill="black", font=("Arial", 14), tags="input_display")
+
+# Create a simple tkinter form to prompt the user
+def prompt_import_method():
+    def set_from_json(value):
+        global fromJson
+        fromJson = value
+        prompt_window.destroy()
+
+    # Create a new window for the prompt
+    prompt_window = tk.Toplevel(root)
+    prompt_window.title("Import Method")
+    prompt_window.geometry("300x150")
+    prompt_window.grab_set()  # Block interaction with the main window
+
+    # Add a label
+    label = tk.Label(prompt_window, text="Do you want to import from JSON?")
+    label.pack(pady=10)
+
+    # Add buttons for Yes and No
+    yes_button = tk.Button(prompt_window, text="Yes", command=lambda: set_from_json(True))
+    yes_button.pack(side=tk.LEFT, padx=20, pady=20)
+
+    no_button = tk.Button(prompt_window, text="No", command=lambda: set_from_json(False))
+    no_button.pack(side=tk.RIGHT, padx=20, pady=20)
+
+    # Wait for the user to make a selection
+    prompt_window.wait_window()
+
 
 # Create the main application window
 root = tk.Tk()
 root.title("Canvas")
+
+# Call the prompt function to set fromJson
+fromJson = False  # Default value
+prompt_import_method()
 
 # Create a canvas widget
 canvas = tk.Canvas(root, width=800, height=600, bg="white")
@@ -336,11 +397,11 @@ canvas.pack()
 
 restart = False
 
-
 restart_button_displayed = False
 label_displayed = False
 input_box_displayed = False
 submit_input_button_displayed = False
+
 
 while True:
     restart = False
@@ -348,14 +409,26 @@ while True:
     canvas.delete("all")
 
     pda = PDASim.PDA([], 0)
+    stateList = []
+    
+    #for import
+    # Read the JSON file as a string
+    if fromJson:
+        json_string = ""
+        with open('data.json', 'r') as file:
+            json_string = file.read()
+        pda.jsonDecoding(json_string)
+        stateList = constructPDAStates(pda)
+        adjacency_matrix = [[0 for _ in range(len(stateList))] for _ in range(len(stateList))]
+        constructPDAArrows(pda, stateList, adjacency_matrix)
+    else: 
+        # Construct State circles via form
+        stateForm = Forms.AddStateForm(tk.Toplevel(root), pda, constructPDAStates, constructPDAArrows, stateList) #CHANGE tk.Toplevel(root) TO WHEREVER THE FORM SHOULD BE DISPLAYED UNDER
+    
     display_stack(pda)
     # pda.stack.append("a")
 
-    stateList = []
-    adjacency_matrix = []
-    # Construct State circles via form
-    stateForm = Forms.AddStateForm(tk.Toplevel(root), pda, constructPDAStates, constructPDAArrows, stateList) #CHANGE tk.Toplevel(root) TO WHEREVER THE FORM SHOULD BE DISPLAYED UNDER
-
+    
     # Draw Arrows for Transitions
     # Initialized to 0 -- if there is no arrow, will be 0. If there is an arrow, it is a list of arrow objects
     # transitionForm = 
@@ -363,12 +436,15 @@ while True:
     # Bind mouse events
     selected_item = None
     canvas.bind("<ButtonPress-1>", on_press)
-    canvas.bind("<B1-Motion>", lambda event: on_drag(event, stateList, stateForm.transitionForm.adjacencyMatrix))
+    if fromJson:
+        canvas.bind("<B1-Motion>", lambda event: on_drag(event, stateList, adjacency_matrix))
+    else:
+        canvas.bind("<B1-Motion>", lambda event: on_drag(event, stateList, stateForm.transitionForm.adjacencyMatrix))
 
 
     # Create a submit button
     if not restart_button_displayed:
-        restart_button = tk.Button(root, text="Restart", command=restart_canvas)
+        restart_button = tk.Button(root, text="Restart", command=lambda: restart_canvas(fromJson))
         restart_button.pack(pady=10)
         resart_button_displayed = True
     

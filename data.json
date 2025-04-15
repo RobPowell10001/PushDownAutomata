@@ -1,0 +1,68 @@
+{
+    "states": [
+        {
+            "name": "init",
+            "isInitial": true,
+            "isFinal": false,
+            "transitions": [
+                {
+                    "destinationState": 1,
+                    "inputSymbol": null,
+                    "topStack": null,
+                    "push": "$",
+                    "pop": false
+                }
+            ]
+        },
+        {
+            "name": "A",
+            "isInitial": false,
+            "isFinal": false,
+            "transitions": [
+                {
+                    "destinationState": 1,
+                    "inputSymbol": "a",
+                    "topStack": null,
+                    "push": "a",
+                    "pop": false
+                },
+                {
+                    "destinationState": 2,
+                    "inputSymbol": "b",
+                    "topStack": "a",
+                    "push": null,
+                    "pop": true
+                }
+            ]
+        },
+        {
+            "name": "B",
+            "isInitial": false,
+            "isFinal": false,
+            "transitions": [
+                {
+                    "destinationState": 2,
+                    "inputSymbol": "b",
+                    "topStack": "a",
+                    "push": null,
+                    "pop": true
+                },
+                {
+                    "destinationState": 3,
+                    "inputSymbol": "c",
+                    "topStack": "$",
+                    "push": "$",
+                    "pop": true
+                }
+            ]
+        },
+        {
+            "name": "C",
+            "isInitial": false,
+            "isFinal": true,
+            "transitions": []
+        }
+    ],
+    "stack": [],
+    "currState": -1
+}
