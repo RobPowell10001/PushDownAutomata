@@ -296,6 +296,8 @@ def make_step(pda, input, currIndex, sourceButton):
         update_state_color(resultStateIndex, True)
         pda.doTransitions(transitionToTake)
         display_stack(pda)
+        if pda.states[pda.currState].isFinal and currIndex == len(input) - 1:
+            messagebox.showinfo("Accepted", "This input was accepted!")
         sourceButton.config(command = lambda: make_step(pda, input, currIndex + 1, sourceButton))
     else: 
         return #FIXME: handle finishing execution
