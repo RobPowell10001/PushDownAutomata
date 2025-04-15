@@ -233,11 +233,13 @@ def constructPDAStates(pda):
         canvas.create_text(text_x, text_y, text=state.name, tags=(f"state_{stateID}", f"mvmt_group_{stateID}"))
 
         # Display circle
-        if state.isFinal == True:
+        if state.isFinal:
             currState = (create_nested_circle(x1, y1, x2, y2, stateID))[0]
-        elif state.isInitial:
-            # Add the initial arrow
+        else:
             currState = canvas.create_oval(x1, y1, x2, y2, fill="white", tags=(f"state_{stateID}", f"mvmt_group_{stateID}", "draggable"))
+        # Add the initial arrow
+        
+        if state.isInitial:
             arrow_x1 = x1 - 30
             arrow_y1 = (y1 + y2) / 2
             arrow_x2 = x1
@@ -245,8 +247,6 @@ def constructPDAStates(pda):
             canvas.create_line(arrow_x1, arrow_y1, arrow_x2, arrow_y2, arrow=tk.LAST, tags=(f"state_{stateID}", f"mvmt_group_{stateID}"))
             # Set Color to Red
             update_state_color(stateID, True)
-        else:
-            currState = canvas.create_oval(x1, y1, x2, y2, fill="white", tags=(f"state_{stateID}", f"mvmt_group_{stateID}", "draggable"))
         
         
         displayedStates.append(currState)
