@@ -23,7 +23,7 @@ class PDA:
         self.states = states
         self.stack = []
         self.currState = currState
-    def jsonExporting(self):
+    def jsonEncoding(self):
         jsonData = {}
         jsonData["states"] = []
         for state in self.states:
