@@ -8,7 +8,6 @@ class Transition:
         self.pop = pop
     
     def toString(self):
-        
         return f"{self.inputSymbol}, {self.topStack} {" (pop)" if self.pop else ""}" + " \N{RIGHTWARDS ARROW} " + f"{self.push}"
 
 class State:
@@ -27,6 +26,8 @@ class PDA:
         jsonData = {}
         jsonData["states"] = []
         for state in self.states:
+            if state.isInitial:
+                jsonData["currState"] = state
             tempTransitionList = []
             for transition in state.transitions:
                 tempTransition = {
@@ -44,8 +45,7 @@ class PDA:
                 "transitions": tempTransitionList
             }
             jsonData["states"].append(tempStateData)
-        jsonData["currState"] = self.currState
-        jsonData["stack"] = self.stack
+        jsonData["stack"] = []
         with open("data.json", "w") as file:
             json.dump(jsonData, file, indent=4)
     def jsonDecoding(self, jsonString):
