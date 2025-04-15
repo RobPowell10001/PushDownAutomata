@@ -22,6 +22,9 @@ class PDA:
         self.states = states
         self.stack = []
         self.currState = currState
+        for state in self.states:
+            if state.isInitial:
+                self.initialState = state
     def jsonEncoding(self):
         jsonData = {}
         jsonData["states"] = []
