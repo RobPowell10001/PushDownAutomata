@@ -22,15 +22,11 @@ class PDA:
         self.states = states
         self.stack = []
         self.currState = currState
-        for state in self.states:
-            if state.isInitial:
-                self.initialState = state
+        self.initialState = -1
     def jsonEncoding(self):
         jsonData = {}
         jsonData["states"] = []
         for state in self.states:
-            if state.isInitial:
-                jsonData["currState"] = state
             tempTransitionList = []
             for transition in state.transitions:
                 tempTransition = {
@@ -49,6 +45,7 @@ class PDA:
             }
             jsonData["states"].append(tempStateData)
         jsonData["stack"] = []
+        jsonData["currState"] = self.initialState
         with open("data.json", "w") as file:
             json.dump(jsonData, file, indent=4)
     def jsonDecoding(self, jsonString):
