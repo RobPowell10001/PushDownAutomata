@@ -284,9 +284,11 @@ def make_step(pda, input, currIndex, sourceButton):
         return #FIXME: handle finishing execution
     if currIndex < len(input):
         currSymbol = input[currIndex]
+        print(f"current input symbol is {currSymbol}")
     else: 
         return #FIXME: handle finishing execution
     validTransitions = pda.findTransitions(currSymbol)
+    print (f"list of valid transitions: {validTransitions}")
     if len(validTransitions) > 0:
         currStateIndex = pda.currState
         transitionToTake = validTransitions[0]
@@ -294,8 +296,8 @@ def make_step(pda, input, currIndex, sourceButton):
         update_state_color(currStateIndex, False)
         update_state_color(resultStateIndex, True)
         pda.doTransitions(transitionToTake)
+        display_stack(pda)
         sourceButton.config(command = lambda: make_step(pda, input, currIndex + 1, sourceButton))
-        
     else: 
         return #FIXME: handle finishing execution
     # take the first one
@@ -310,7 +312,17 @@ def submit_input_string(pda):
     submit_input_button_displayed = False
     input_box.pack_forget() # Hide the box used for input
     input_box_displayed = False
-    
+
+# Function to display the stack on the canvas
+def display_stack(pda):
+    # Clear any existing stack display
+    canvas.delete("stack_display")
+
+    # Format the stack as a string
+    stack_text = "Stack:\n" + "\n".join(pda.stack)
+
+    # Display the stack in the top-left corner
+    canvas.create_text(10, 10, anchor="nw", text=stack_text, fill="black", font=("Arial", 12), tags="stack_display")
 
 
 # Create the main application window
@@ -335,7 +347,8 @@ while True:
     canvas.delete("all")
 
     pda = PDASim.PDA([], 0)
-    pda.stack.append("a")
+    display_stack(pda)
+    # pda.stack.append("a")
 
     stateList = []
     adjacency_matrix = []
@@ -370,7 +383,7 @@ while True:
         input_box.pack(pady=5)
         input_box_displayed = True
 
-    #Create a step forward button
+    #Create a submit input button, which itself creates a step forward button
     if not submit_input_button_displayed:
         submit_input_button = tk.Button(root, text="Submit Input", command=lambda: submit_input_string(pda))
         submit_input_button.pack(pady=10)

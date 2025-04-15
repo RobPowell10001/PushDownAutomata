@@ -62,7 +62,11 @@ class PDA:
             if state["isInitial"]:
                 self.currState = len(self.states) - 1
     def topStack(self):
-        return self.stack[len(self.stack)-1]
+        if len(self.stack) != 0:
+            return self.stack[len(self.stack)-1]
+        else:
+            print("stack is empty, returning None")
+            return None
     def findTransitions(self, inputSymbol):
         acceptedTransitions = []
         for transition in self.states[self.currState].transitions:
