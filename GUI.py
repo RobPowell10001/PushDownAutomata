@@ -370,7 +370,7 @@ def prompt_import_method():
     prompt_window.grab_set()  # Block interaction with the main window
 
     # Add a label
-    label = tk.Label(prompt_window, text="Do you want to import from JSON?")
+    label = tk.Label(prompt_window, text="Do you want to import from data.json?")
     label.pack(pady=10)
 
     # Add buttons for Yes and No
@@ -412,7 +412,7 @@ while True:
     pda = PDASim.PDA([], 0)
     stateList = []
     
-    #for import
+    # If user tries to input from JSON
     # Read the JSON file as a string
     if fromJson:
         json_string = ""
@@ -426,22 +426,16 @@ while True:
         # Construct State circles via form
         stateForm = Forms.AddStateForm(tk.Toplevel(root), pda, constructPDAStates, constructPDAArrows, stateList) #CHANGE tk.Toplevel(root) TO WHEREVER THE FORM SHOULD BE DISPLAYED UNDER
     
+    # Now that the PDA has been initialized, display the (empty) stack
     display_stack(pda)
-    # pda.stack.append("a")
 
-    
-    # Draw Arrows for Transitions
-    # Initialized to 0 -- if there is no arrow, will be 0. If there is an arrow, it is a list of arrow objects
-    # transitionForm = 
-
-    # Bind mouse events
+    # Bind mouse events, allowing draff
     selected_item = None
     canvas.bind("<ButtonPress-1>", on_press)
     if fromJson:
         canvas.bind("<B1-Motion>", lambda event: on_drag(event, stateList, adjacency_matrix))
     else:
         canvas.bind("<B1-Motion>", lambda event: on_drag(event, stateList, stateForm.transitionForm.adjacencyMatrix))
-
 
     # Create a submit button
     if not restart_button_displayed:
