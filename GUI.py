@@ -314,7 +314,8 @@ def make_step(pda, input, currIndex, sourceButton):
             sourceButton.config(command = lambda: make_step(pda, input, currIndex + 1, sourceButton))
             display_input(input, currIndex + 1)
     else: 
-        return #FIXME: handle finishing execution
+        messagebox.showerror("Did Not Accept", "Failed, no valid transitions")
+        sourceButton.config(command = lambda: messagebox.showerror("Did Not Accept", "Failed, no valid transitions"))
     # take the first one
 
 def submit_input_string(pda):
