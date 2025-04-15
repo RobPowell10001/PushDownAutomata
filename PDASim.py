@@ -23,7 +23,31 @@ class PDA:
         self.states = states
         self.stack = []
         self.currState = currState
-
+    def jsonExporting(self):
+        jsonData = {}
+        jsonData["states"] = []
+        for state in self.states:
+            tempTransitionList = []
+            for transition in state.transitions:
+                tempTransition = {
+                    "destinationState": transition.destinationState,
+                    "inputSymbol": transition.inputSymbol,
+                    "topStack": transition.topStack,
+                    "push": transition.push,
+                    "pop": transition.pop
+                }
+                tempTransitionList.append(tempTransition)
+            tempStateData = {
+                "name": state.name,
+                "isInitial": state.isInitial,
+                "isFinal": state.isFinal,
+                "transitions": tempTransitionList
+            }
+            jsonData["states"].append(tempStateData)
+        jsonData["currState"] = self.currState
+        jsonData["stack"] = self.stack
+        with open("data.json", "w") as file:
+            json.dump(jsonData, file, indent=4)
     def jsonDecoding(self, jsonString):
         jsonObject = json.loads(jsonString) 
         self.states = []
