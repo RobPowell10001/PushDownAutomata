@@ -71,7 +71,7 @@ def draw_arrow(matrix, states, index1, index2, transition):
     text_id = canvas.create_text(midpoint_x, midpoint_y - (13 * (1 + numTransitions)), text=f"{transition.toString()}", fill="black")
 
     # Associate the text ID with the arrow
-    canvas.itemconfig(newArrow, tags=(f"arrow_{index1}_{index2}", f"text_{text_id}"))
+    canvas.itemconfig(newArrow, tags=(f"arrow_{index1}_{index2}", f"text_{text_id}_{numTransitions}"))
 
     # Store the arrow in the matrix
     if matrix[index1][index2] != 0:
@@ -176,8 +176,9 @@ def update_arrow(arrow, states, id1, id2):
         for tag in tags:
             if tag.startswith("text_"):
                 text_id = int(tag.split("_")[1])
+                transition_num = int(tag.split("_")[2])
                 midpoint_x = (state1_edge[0] + state2_edge[0]) / 2
-                midpoint_y = (state1_edge[1] + state2_edge[1]) / 2
+                midpoint_y = ((state1_edge[1] + state2_edge[1]) / 2) - (13 * (1 + transition_num))
                 canvas.coords(text_id, midpoint_x, midpoint_y - 10)
 
 def create_nested_circle(x1, y1, x2, y2, stateID):
