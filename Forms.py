@@ -69,7 +69,7 @@ class AddTransitionForm:
         return value if value else None
 
     def add_transition_section(self):
-        """Add a new transition entry section (name, email, phone)."""
+        """Add a new transition entry section."""
         frame = tk.Frame(self.form_frame, borderwidth=1, relief="groove", padx=10, pady=10)
         frame.pack(pady=5, fill="x", expand=True)
 
@@ -110,7 +110,7 @@ class AddTransitionForm:
 
     def submit_form(self):
         """Collect and display data from all transition sections."""
-        all_people = []
+        allTransitions = []
         for idx, transition in enumerate(self.transition_sections):
             sourceState = self.getValue(transition['sourceState'])
             destinationState = self.getValue(transition['destinationState'])
@@ -118,11 +118,11 @@ class AddTransitionForm:
             stackSymbol = self.getValue(transition['stackSymbol'])
             pop = transition['pop'].get() #can get actual value because it is a boolean and cannot be None
             push = self.getValue(transition['push'])
-            all_people.append({'sourceState': sourceState, 'destinationState': destinationState, 'inputSymbol': inputSymbol, 'stackSymbol': stackSymbol, 'pop': pop, 'push': push})
+            allTransitions.append({'sourceState': sourceState, 'destinationState': destinationState, 'inputSymbol': inputSymbol, 'stackSymbol': stackSymbol, 'pop': pop, 'push': push})
 
         #print("Submitted Transitions:")
         stateMap = {item.name: index for index, item in enumerate(self.pda.states)}
-        for i, transition in enumerate(all_people):
+        for i, transition in enumerate(allTransitions):
             #print(f"Transition {i + 1}: src={transition['sourceState']}, destinationState={transition['destinationState']}")
             src = stateMap.get(transition['sourceState'], -1)
             dest = stateMap.get(transition['destinationState'], -1)
@@ -240,15 +240,15 @@ class AddStateForm:
 
     def submit_form(self):
         """Save data from all state sections to a PDA."""
-        all_states = []
+        allStates = []
         for idx, state in enumerate(self.state_sections):
             name = self.getValue(state['name'])
             initial = state['initial'].get()
             final = state['final'].get()
-            all_states.append({'name': name, 'initial': initial, 'final': final})
+            allStates.append({'name': name, 'initial': initial, 'final': final})
 
         #print("Submitted States:")
-        for i, state in enumerate(all_states):
+        for i, state in enumerate(allStates):
             #print(f"State {i + 1}: name={state['name']}, final={state['final']}")
             self.pda.states.append(PDASim.State(state['name'], state['initial'], state['final'], []))
             if state['initial']:
