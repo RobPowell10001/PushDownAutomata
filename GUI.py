@@ -68,7 +68,7 @@ def draw_arrow(matrix, states, index1, index2, transition):
     midpoint_y = (state1_edge[1] + state2_edge[1]) / 2
 
     # Create the text at the midpoint
-    text_id = canvas.create_text(midpoint_x, midpoint_y - (10 * (1 + numTransitions)), text=f"{transition.toString()}", fill="black")
+    text_id = canvas.create_text(midpoint_x, midpoint_y - (13 * (1 + numTransitions)), text=f"{transition.toString()}", fill="black")
 
     # Associate the text ID with the arrow
     canvas.itemconfig(newArrow, tags=(f"arrow_{index1}_{index2}", f"text_{text_id}"))
@@ -79,7 +79,7 @@ def draw_arrow(matrix, states, index1, index2, transition):
     else:
         matrix[index1][index2] = [(newArrow, text_id)]
 
-def draw_circular_arrow(matrix, stateList, stateID, transition):
+def draw_circular_arrow(matrix, stateList, stateID, transition):    
     numTransitions = 0
     if matrix[stateID][stateID] != 0:
         numTransitions = len(matrix[stateID][stateID])
@@ -114,7 +114,7 @@ def draw_circular_arrow(matrix, stateList, stateID, transition):
 
     # Add the transition text near the circular arrow
     text_x = start_x - loop_offset * 1.5 
-    text_y = start_y - loop_offset * 1.5 - (10 * numTransitions)
+    text_y = start_y - loop_offset * 1.5 - (13 * numTransitions)
     text_id = canvas.create_text(text_x, text_y, text=f"{transition.toString()}", fill="black", tags=(f"mvmt_group_{stateID}"))
 
     # Store the circular arrow and text in the matrix
@@ -281,7 +281,7 @@ def restart_canvas(fromJson):
     root.quit()
 
 def make_step(pda, input, currIndex, sourceButton):
-    print(currIndex)
+    #print(currIndex)
     if currIndex < len(input):
         currSymbol = input[currIndex]
     elif pda.states[pda.currState].isFinal:
@@ -290,10 +290,47 @@ def make_step(pda, input, currIndex, sourceButton):
     else:
         currSymbol = None
     validTransitions = pda.findTransitions(currSymbol)
-    print (f"list of valid transitions: {validTransitions}")
+    #print (f"list of valid transitions: {validTransitions}")
     if len(validTransitions) > 0:
+        transitionToTake = None
         currStateIndex = pda.currState
-        transitionToTake = validTransitions[0]
+        if len(validTransitions) == 1:
+            transitionToTake = validTransitions[0]
+        else:
+            # Create a pop-up window for transition selection
+            popup = tk.Toplevel(root)
+            popup.title("Select Transition")
+            popup.geometry("300x200")
+            popup.grab_set()  # Block interaction with the main window
+
+            # Add a label to the pop-up
+            label = tk.Label(popup, text="Select a transition:")
+            label.pack(pady=10)
+
+            # Create a variable to store the selected transition
+            selected_transition = tk.StringVar(popup)
+            selected_transition.set(validTransitions[0].toString())  # Default to the first transition
+
+            # Create a dropdown menu for transitions
+            dropdown = tk.OptionMenu(popup, selected_transition, *[t.toString() for t in validTransitions])
+            dropdown.pack(pady=10)
+            
+            # Function to confirm the selection
+            def confirm_selection(): #function defined in an if else block wtf am i smoking
+                nonlocal transitionToTake
+                for t in validTransitions:
+                    if t.toString() == selected_transition.get():
+                        transitionToTake = t
+                popup.destroy()
+            
+            # Add a confirm button
+            confirm_button = tk.Button(popup, text="Confirm", command=confirm_selection)
+            confirm_button.pack(pady=10)
+
+            # Wait for the user to make a selection
+            popup.wait_window()
+
+        # Proceed with the selected transition
         resultStateIndex = transitionToTake.destinationState
         update_state_color(currStateIndex, False)
         update_state_color(resultStateIndex, True)
@@ -301,15 +338,15 @@ def make_step(pda, input, currIndex, sourceButton):
         display_stack(pda)
         if pda.states[pda.currState].isFinal and currIndex == len(input) - 1:
             messagebox.showinfo("Accepted", "This input was accepted!")
-        if (transitionToTake.inputSymbol == None):
-            sourceButton.config(command = lambda: make_step(pda, input, currIndex, sourceButton))
+        if transitionToTake.inputSymbol is None:
+            sourceButton.config(command=lambda: make_step(pda, input, currIndex, sourceButton))
             display_input(input, currIndex)
         else:
-            sourceButton.config(command = lambda: make_step(pda, input, currIndex + 1, sourceButton))
+            sourceButton.config(command=lambda: make_step(pda, input, currIndex + 1, sourceButton))
             display_input(input, currIndex + 1)
-    else: 
+    else:
         messagebox.showerror("Did Not Accept", "Failed, no valid transitions")
-        sourceButton.config(command = lambda: messagebox.showerror("Did Not Accept", "Failed, no valid transitions"))
+        sourceButton.config(command=lambda: messagebox.showerror("Did Not Accept", "Failed, no valid transitions"))
     # take the first one
 
 def submit_input_string(pda):

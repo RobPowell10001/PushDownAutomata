@@ -1,5 +1,3 @@
-#print("hi world")
-
 import tkinter as tk
 import PDASim
 

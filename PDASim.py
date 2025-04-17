@@ -65,15 +65,15 @@ class PDA:
         if len(self.stack) != 0:
             return self.stack[len(self.stack)-1]
         else:
-            print("stack is empty, returning None")
+            #print("stack is empty, returning None")
             return None
     def findTransitions(self, inputSymbol):
         acceptedTransitions = []
-        print(f"on input {inputSymbol} and topStack {self.topStack()}:")
+        #print(f"on input {inputSymbol} and topStack {self.topStack()}:")
         for transition in self.states[self.currState].transitions:
-            print(f"\tchecking for input = {transition.inputSymbol} and topStack = {transition.topStack}")
+            #print(f"\tchecking for input = {transition.inputSymbol} and topStack = {transition.topStack}")
             if ((transition.inputSymbol == inputSymbol) or transition.inputSymbol == None) and (transition.topStack == self.topStack() or transition.topStack == None):
-                print("accepted!")
+                #print("accepted!")
                 acceptedTransitions.append(transition)
         return acceptedTransitions
     def doTransitions(self,transition):
