@@ -178,7 +178,7 @@ def update_arrow(arrow, states, id1, id2):
                 text_id = int(tag.split("_")[1])
                 transition_num = int(tag.split("_")[2])
                 midpoint_x = (state1_edge[0] + state2_edge[0]) / 2
-                midpoint_y = ((state1_edge[1] + state2_edge[1]) / 2) - (13 * (1 + transition_num))
+                midpoint_y = ((state1_edge[1] + state2_edge[1]) / 2) - (13 * (transition_num))
                 canvas.coords(text_id, midpoint_x, midpoint_y - 10)
 
 def create_nested_circle(x1, y1, x2, y2, stateID):
@@ -441,8 +441,17 @@ fromCache = False
 while True:
     # Call the prompt function to set fromJson
     fromJson = False  # Default value
-    if not fromCache:
-        prompt_import_method()
+    importValid = False 
+    while not importValid:
+        if not fromCache:
+            prompt_import_method()
+        if fromJson:
+            # Check if the file data.json exists in the root, if it does not exist, continue
+            if not os.path.exists("data.json"):
+                messagebox.showerror("Error", "can't")
+                continue
+            
+        importValid = True
 
     restart = False
     #clear canvas
