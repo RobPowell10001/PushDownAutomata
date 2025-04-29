@@ -304,13 +304,14 @@ def restart_canvas(fromJson):
     canvas.delete("all")
 
     # Destroy the state form window
-    if not fromJson:
+    if not fromJson and not fromCache:
         stateForm.root.destroy()
 
     # Destroy all widgets in the root window except the canvas
     for widget in root.winfo_children():
         if widget != canvas:
             widget.destroy()
+    fromCache = False
     root.quit()
 
 def make_step(pda, input, currIndex, sourceButton):
@@ -490,14 +491,13 @@ while True:
     # Read the JSON file as a string
     if fromJson or fromCache:
         json_string = ""
-        if fromJson:
-            filepath = filedialog.askopenfilename(initialdir = ".", title = "Select a File",filetypes = (("Json files",
-                                                            "*.json*"),
-                                                        ("all files",
-                                                            "*.*")))
-            if not ("json" in filepath):
-                messagebox.showerror("File Error", "Did not select Json File")
-                continue
+        filepath = filedialog.askopenfilename(initialdir = ".", title = "Select a File",filetypes = (("Json files",
+                                                        "*.json*"),
+                                                       ("all files",
+                                                        "*.*")))
+        if not ("json" in filepath):
+            messagebox.showerror("File Error", "Did not select Json File")
+            continue
         with open(f'{filepath if fromJson else "cache.json"}', 'r') as file:
             json_string = file.read()
         pda.jsonDecoding(json_string)
