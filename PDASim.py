@@ -34,8 +34,10 @@ class PDA:
     def jsonEncoding(self, fileName = "data"):
         jsonData = {}
         jsonData["states"] = []
+        #Creates each state object
         for state in self.states:
             tempTransitionList = []
+            #Creates all the transitions inside of each state object
             for transition in state.transitions:
                 tempTransition = {
                     "destinationState": transition.destinationState,
@@ -54,6 +56,7 @@ class PDA:
             jsonData["states"].append(tempStateData)
         jsonData["stack"] = []
         jsonData["currState"] = self.initialState
+        #Dumps all the json data into a file
         with open(f"{fileName}.json", "w") as file:
             json.dump(jsonData, file, indent=4)
 
@@ -62,8 +65,10 @@ class PDA:
         jsonObject = json.loads(jsonString) 
         self.states = []
         self.stack = []
+        #Decodes each state
         for state in jsonObject["states"]:
             tempTransitionList = [] 
+            #Decodes each transition within each state
             for transition in state["transitions"]:
                 tempTransition = Transition(transition["destinationState"],transition["inputSymbol"],transition["topStack"],transition["push"],transition["pop"])
                 tempTransitionList.append(tempTransition)
