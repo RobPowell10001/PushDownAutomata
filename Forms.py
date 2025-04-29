@@ -18,7 +18,7 @@ class AddTransitionForm:
         title = tk.Label(root, text="Add Transitions", font=("Arial", 14))
         title.pack(pady=10)
 
-                # Scrollable Canvas Setup
+        # Scrollable Canvas Setup
         canvas_frame = tk.Frame(root)
         canvas_frame.pack(fill="both", expand=True)
 
@@ -63,6 +63,7 @@ class AddTransitionForm:
         self.result_label.pack()
         
     def getValue(self, entry):
+        """Returns value of form element or None if element is empty"""
         if isinstance(entry, tk.BooleanVar):
             return entry.get()
         value = entry.get().strip()
@@ -209,13 +210,14 @@ class AddStateForm:
         self.result_label.pack()
 
     def getValue(self, entry):
+        """Returns value of form element or None if element is empty"""
         if isinstance(entry, tk.BooleanVar):
             return entry.get()
         value = entry.get().strip()
         return value if value else None
 
     def add_transition_section(self):
-        """Add a new state entry section (name, email, phone)."""
+        """Add a new state entry section"""
         frame = tk.Frame(self.form_frame, borderwidth=1, relief="groove", padx=10, pady=10)
         frame.pack(pady=5, fill="x", expand=True)
 
@@ -239,7 +241,7 @@ class AddStateForm:
         self.state_sections.append(inputs)
 
     def submit_form(self):
-        """Save data from all state sections to a PDA."""
+        """Save data from all state sections to a PDA"""
         allStates = []
         for idx, state in enumerate(self.state_sections):
             name = self.getValue(state['name'])
