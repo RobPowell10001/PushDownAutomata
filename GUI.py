@@ -445,7 +445,7 @@ def prompt_import_method():
     prompt_window.grab_set()  # Block interaction with the main window
 
     # Add a label
-    label = tk.Label(prompt_window, text="Do you want to import from data.json?")
+    label = tk.Label(prompt_window, text="Do you want to import from a JSON file?")
     label.pack(pady=10)
 
     # Add buttons for Yes and No
