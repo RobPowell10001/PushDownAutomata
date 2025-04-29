@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
+from tkinter import filedialog
 import PDASim
 import Forms
 import json
@@ -444,13 +445,7 @@ while True:
     importValid = False 
     while not importValid:
         if not fromCache:
-            prompt_import_method()
-        if fromJson:
-            # Check if the file data.json exists in the root, if it does not exist, continue
-            if not os.path.exists("data.json"):
-                messagebox.showerror("Error", "can't")
-                continue
-            
+            prompt_import_method()         
         importValid = True
 
     restart = False
@@ -464,7 +459,14 @@ while True:
     # Read the JSON file as a string
     if fromJson or fromCache:
         json_string = ""
-        with open(f'{"data" if fromJson else "cache"}.json', 'r') as file:
+        filepath = filedialog.askopenfilename(initialdir = ".", title = "Select a File",filetypes = (("Json files",
+                                                        "*.json*"),
+                                                       ("all files",
+                                                        "*.*")))
+        if not ("json" in filepath):
+            messagebox.showerror("File Error", "Did not select Json File")
+            continue
+        with open(f'{filepath if fromJson else "cache.json"}', 'r') as file:
             json_string = file.read()
         pda.jsonDecoding(json_string)
         stateList = constructPDAStates(pda)
