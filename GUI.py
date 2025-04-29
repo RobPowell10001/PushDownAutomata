@@ -33,11 +33,10 @@ def on_drag(event, states, matrix):
             items_to_move = canvas.find_withtag(movement_tag)
             for item in items_to_move:
                 canvas.move(item, dx, dy)
-        
         update_arrows(states, matrix, selected_item)
 
 #draws an arrow from state 1 to state 2
-def draw_arrow(matrix, states, index1, index2, transition):
+def draw_arrow(matrix, states, index1, index2, transition): 
     numTransitions = 0
     if matrix[index1][index2] != 0:
         numTransitions = len(matrix[index1][index2])
@@ -150,7 +149,7 @@ def update_arrows(states, matrix, selectedState):
 
 def update_arrow(arrow, states, id1, id2):
     if id1 == id2:  # Handle circular arrows (self-loops)
-        a = 0
+        pass
     else:  # Handle normal arrows
         # Get the center of the first circle
         state1_coords = canvas.coords(states[id1])
@@ -465,7 +464,11 @@ root = tk.Tk()
 root.title("Canvas")
 
 # Create a canvas widget
-canvas = tk.Canvas(root, width=800, height=600, bg="white")
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+canvas_width = int(screen_width * 0.6)  # 60% of screen width
+canvas_height = int(screen_height * 0.6)  # 60% of screen height
+canvas = tk.Canvas(root, width=canvas_width, height=canvas_height, bg="white")
 canvas.pack()
 
 restart = False
