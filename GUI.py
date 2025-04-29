@@ -242,10 +242,7 @@ def construct_PDA_states(pda):
         x2 = x1 + circle_radius * 2
         y2 = y1 + circle_radius * 2
 
-        # Display state name above the circle
-        text_x = (x1 + x2) / 2
-        text_y = y1 - 10  # Position slightly above the circle
-        canvas.create_text(text_x, text_y, text=state.name, tags=(f"state_{stateID}", f"mvmt_group_{stateID}"))
+        
 
         # Display circle
         if state.isFinal:
@@ -262,6 +259,11 @@ def construct_PDA_states(pda):
             canvas.create_line(arrow_x1, arrow_y1, arrow_x2, arrow_y2, arrow=tk.LAST, tags=(f"state_{stateID}", f"mvmt_group_{stateID}"))
             # Set Color to Red
             update_state_color(stateID, True)
+        
+        # Display state name above the circle
+        text_x = (x1 + x2) / 2
+        text_y = (y1 + y2) / 2  # Position slightly above the circle
+        canvas.create_text(text_x, text_y, text=state.name, tags=(f"state_{stateID}", f"mvmt_group_{stateID}"))
         
         
         displayedStates.append(currState)
