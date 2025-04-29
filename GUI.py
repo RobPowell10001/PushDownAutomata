@@ -445,6 +445,8 @@ def prompt_import_method():
     prompt_window.title("Import Method")
     prompt_window.geometry("300x150")
     prompt_window.grab_set()  # Block interaction with the main window
+    prompt_window.lift()
+    prompt_window.attributes('-topmost', True)
 
     # Add a label
     label = tk.Label(prompt_window, text="Do you want to import from a JSON file?")
