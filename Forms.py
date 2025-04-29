@@ -11,7 +11,12 @@ class AddTransitionForm:
         self.adjacencyMatrix = [[0 for _ in range(len(stateList))] for _ in range(len(stateList))] #matrix to store arrows
         
         self.pda = pda
-
+        
+        # Add list of state names
+        self.stateNameList = []
+        for state in pda.states:
+            self.stateNameList.append(state.name)
+        
         self.transition_sections = []  # To track all transition entry blocks
 
         # Title
@@ -76,16 +81,16 @@ class AddTransitionForm:
 
         # Store the input widgets
         inputs = {}
-
+     
         # Source
         tk.Label(frame, text="Source state:").grid(row=0, column=0, sticky="e")
-        inputs['sourceState'] = tk.Entry(frame)
-        inputs['sourceState'].grid(row=0, column=1, pady=2, padx=5)
+        inputs['sourceState'] = tk.StringVar()
+        tk.OptionMenu(frame, inputs['sourceState'], *self.stateNameList).grid(row=0, column=1, pady=2, padx=5)
 
         # Destination
         tk.Label(frame, text="Destination state:").grid(row=1, column=0, sticky="e")
-        inputs['destinationState'] = tk.Entry(frame)
-        inputs['destinationState'].grid(row=1, column=1, pady=2, padx=5)
+        inputs['destinationState'] = tk.StringVar()
+        tk.OptionMenu(frame, inputs['destinationState'], *self.stateNameList).grid(row=1, column=1, pady=2, padx=5)
 
         # Input
         tk.Label(frame, text="Input symbol:").grid(row=2, column=0, sticky="e")
@@ -194,13 +199,13 @@ class AddStateForm:
         self.canvas.bind_all("<MouseWheel>", _on_mousewheel)
 
         # Add initial state section
-        self.add_transition_section()
+        self.add_state_section()
 
         # Buttons
         btn_frame = tk.Frame(root)
         btn_frame.pack(pady=10)
 
-        add_button = tk.Button(btn_frame, text="Add State", command=self.add_transition_section)
+        add_button = tk.Button(btn_frame, text="Add State", command=self.add_state_section)
         add_button.pack(side="left", padx=5)
 
         submit_button = tk.Button(btn_frame, text="Submit", command=self.submit_form)
@@ -216,13 +221,16 @@ class AddStateForm:
         value = entry.get().strip()
         return value if value else None
 
-    def add_transition_section(self):
+    def add_state_section(self):
         """Add a new state entry section"""
         frame = tk.Frame(self.form_frame, borderwidth=1, relief="groove", padx=10, pady=10)
         frame.pack(pady=5, fill="x", expand=True)
 
         # Store the input widgets
         inputs = {}
+        
+        # get index of this state entry section
+        index = len(self.state_sections)
 
         # name
         tk.Label(frame, text="Name:").grid(row=0, column=0, sticky="e")
@@ -231,7 +239,8 @@ class AddStateForm:
 
         # initial
         inputs['initial'] = tk.BooleanVar()
-        tk.Checkbutton(frame, text="Initial state?", variable=inputs['initial']).grid(row=1, column=1, pady=2, padx=5)
+        tk.Checkbutton(frame, text="Initial state?", variable=inputs['initial'], 
+                       command=lambda idx=index: self.handle_initial_selection(idx)).grid(row=1, column=1, pady=2, padx=5)
 
         # final
         inputs['final'] = tk.BooleanVar()
@@ -240,8 +249,46 @@ class AddStateForm:
 
         self.state_sections.append(inputs)
 
+    def handle_initial_selection(self, selected_index):
+        # If the user checked this box, uncheck all others
+        for idx, state in enumerate(self.state_sections):
+            if idx != selected_index:
+                state['initial'].set(False)
+                
+    def validate_states(self):
+        initial_count = 0
+        final_count = 0
+        unnamed_state = False
+
+        for state in self.state_sections:
+            if state['initial'].get():
+                initial_count += 1
+            if state['final'].get():
+                final_count += 1
+            if not self.getValue(state['name']):
+                unnamed_state = True
+
+        errors = []
+        if initial_count != 1:
+            errors.append("There must be exactly one initial state.")
+        if final_count == 0:
+            errors.append("There must be at least one final state.")
+        if unnamed_state:
+            errors.append("There is at least one unnamed state")
+
+        if errors:
+            error_message = "\n".join(errors)
+            self.root.lift()
+            self.root.attributes('-topmost', True)
+            tk.messagebox.showerror("Validation Error", error_message)
+            self.root.attributes('-topmost', False)
+            return False
+        return True
+    
     def submit_form(self):
         """Save data from all state sections to a PDA"""
+        if not self.validate_states():
+            return
         allStates = []
         for idx, state in enumerate(self.state_sections):
             name = self.getValue(state['name'])
@@ -251,7 +298,7 @@ class AddStateForm:
 
         #print("Submitted States:")
         for i, state in enumerate(allStates):
-            #print(f"State {i + 1}: name={state['name']}, final={state['final']}")
+            #print(f"State {i + 1}: name={state['name']}, final={state['final']}") #debug message
             self.pda.states.append(PDASim.State(state['name'], state['initial'], state['final'], []))
             if state['initial']:
                 self.pda.currState = len(self.pda.states) - 1
