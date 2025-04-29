@@ -215,8 +215,22 @@ def update_state_color(stateID, isCurrent):
         elif canvas.type(item) == "text":  # For text, change the text color
             canvas.itemconfig(item, fill=color)
 
-def constructPDAStates(pda):
-
+def construct_PDA_states(pda):
+    """    Constructs and displays the states of a Pushdown Automaton (PDA) on a canvas.
+    This function creates draggable circles representing the states of the PDA, 
+    along with their labels and additional visual elements such as initial state 
+    arrows and nested circles for final states. Each state is assigned a unique 
+    identifier and grouped for movement on the canvas.
+    Args:
+        pda (PDA): An object representing the Pushdown Automaton. It is expected 
+                   to have a `states` attribute, where each state has the following 
+                   properties:
+                   - name (str): The name of the state.
+                   - isFinal (bool): Indicates if the state is a final state.
+                   - isInitial (bool): Indicates if the state is the initial state.
+    Returns:
+        list: A list of canvas objects representing the displayed states.
+    """
     # Draw n draggable circles
     circle_radius = 50
     circle_spacing = 20
@@ -239,8 +253,8 @@ def constructPDAStates(pda):
             currState = (create_nested_circle(x1, y1, x2, y2, stateID))[0]
         else:
             currState = canvas.create_oval(x1, y1, x2, y2, fill="white", tags=(f"state_{stateID}", f"mvmt_group_{stateID}", "draggable"))
-        # Add the initial arrow
         
+        # Add the initial arrow
         if state.isInitial:
             arrow_x1 = x1 - 30
             arrow_y1 = (y1 + y2) / 2
@@ -256,8 +270,25 @@ def constructPDAStates(pda):
 
     return displayedStates
 
-def constructPDAArrows(pda, stateList, matrix):
-    
+def construct_PDA_arrows(pda, stateList, matrix):
+    """
+    Constructs and draws arrows representing the transitions of a Pushdown Automaton (PDA) 
+    on a graphical interface.
+
+    This function iterates through the states and transitions of the given PDA, and for each 
+    transition, it determines whether to draw a circular arrow (for self-loops) or a standard 
+    arrow (for transitions between different states). The arrows are drawn on the provided 
+    matrix using the state positions from the stateList.
+
+    Args:
+        pda (PDA): The Pushdown Automaton object containing states and transitions.
+        stateList (list): A list of state objects or their graphical representations, 
+                          used to determine the positions of states.
+        matrix: The graphical matrix or canvas where the arrows will be drawn.
+
+    Returns:
+        None
+    """
     for stateID in range(len(pda.states)):
         for transition in pda.states[stateID].transitions:
             if stateID == transition.destinationState:
@@ -470,12 +501,12 @@ while True:
         with open(f'{filepath if fromJson else "cache.json"}', 'r') as file:
             json_string = file.read()
         pda.jsonDecoding(json_string)
-        stateList = constructPDAStates(pda)
+        stateList = construct_PDA_states(pda)
         adjacency_matrix = [[0 for _ in range(len(stateList))] for _ in range(len(stateList))]
-        constructPDAArrows(pda, stateList, adjacency_matrix)
+        construct_PDA_arrows(pda, stateList, adjacency_matrix)
     else: 
         # Construct State circles via form
-        stateForm = Forms.AddStateForm(tk.Toplevel(root), pda, constructPDAStates, constructPDAArrows, stateList) #CHANGE tk.Toplevel(root) TO WHEREVER THE FORM SHOULD BE DISPLAYED UNDER
+        stateForm = Forms.AddStateForm(tk.Toplevel(root), pda, construct_PDA_states, construct_PDA_arrows, stateList) #CHANGE tk.Toplevel(root) TO WHEREVER THE FORM SHOULD BE DISPLAYED UNDER
     
     # Now that the PDA has been initialized, display the (empty) stack
     display_stack(pda)
